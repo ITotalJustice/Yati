@@ -28,7 +28,7 @@ __**Misc**__
 
 ----
 
-# What's next (in no particular)
+# What's next (in no particular order)
 
 * remove hard coded header_key_source key (will do this first).
 * re-write most of the code.
