@@ -1,0 +1,10 @@
+.vscode/**
+build/**
+tools_extra/**
+old_source/**
+*.zip
+*.nro
+*.nacp
+*.elf
+*.jpg
+*.txt
