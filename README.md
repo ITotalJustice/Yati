@@ -17,14 +17,14 @@ __**Currently can install:**__
 __**Install Protocals:**__
 
 * file browser for sd card installs
-* basic http / https support, loads the url from `/switch/yati/http_game.txt`
+* very basic http / https support, loads the url from `/switch/yati/http_game.txt`
 * very basic usb support. drag and drop the file you want to install onto the `usb_total.py`
 
 __**Misc**__
 
 * auto ignores fw version.
 * split installs for all of the above (nca, nsp, xci, nsz, xsz).
-* latest sig patches for either hekate / fusee primary users.
+* installs latest sig patches for either hekate / fusee primary users.
 
 ----
 
