@@ -5,32 +5,15 @@ import os
 from pathlib import Path
 
 nsp_name = ""
-#file_array = []
 
-
-"""class nsp_info():
-    def __init__(self, name, size):
-        self.name = name
-        self.size = size
-
-class pfs0_header():
-    def __init__(self, magic, total_nca, string_table_size, padding):
-        self.magic = magic
-        self.total_nca = total_nca
-        self.string_table_size = string_table_size
-        self.padding = padding
-
-def seek_8(file):
-    file.seek(0, 8)"""
 
 def read_nsp(range_size, range_offset, out_ep):
-
     with open(nsp_name, "rb") as f:
         f.seek(range_offset)
 
         curr_off = 0x0
         end_off = range_size
-        read_size = 0x100000 # 8MiB
+        read_size = 0x100000 # 1MiB
 
         while curr_off < end_off:
             if curr_off + read_size >= end_off:
@@ -41,10 +24,8 @@ def read_nsp(range_size, range_offset, out_ep):
             curr_off += read_size
             print("reading {} - {}".format(curr_off, end_off))
 
-        f.close()
 
 def wait_for_input(in_ep, out_ep):
-
     print("now waiting for intput\n")
 
     while True:
@@ -58,55 +39,21 @@ def wait_for_input(in_ep, out_ep):
 
         if (mode == 0):
             break
-        read_nsp(range_size, range_offset, out_ep)    
+        read_nsp(range_size, range_offset, out_ep)
 
-def get_file_size(file):
-    size = 0
-    f = open(file, 'r')
-    f.seek(0, 2)
-    size = f.tell()
-    f.close()
-    return size
-
-"""
-def loop_array(argv):
-    args = len(argv)
-
-    for i in range(1, args):
-        get_file_size(argv[i])
-        print("name is {}".format(argv[i]))
-
-def parse_nsp(file):
-
-    # check if it is a file.
-    if not file.is_file():
-        raise ValueError('must be a .nsp file!!!!!')
-"""
 
 if __name__ == '__main__':
 
     # check which mode the user has selected.
     args = len(sys.argv)
-    if (args == 2):
-        print("2 args")
-        # parse single nsp
-    """elif (args > 2):
-        print("{} args".format(args))
-        loop_array(sys.argv)
-        # parse mutliple nsp
-    else:
-        print("1 args")
-        # scan this folder and parse nsp."""
-
-
-    if len(sys.argv) != 2:
+    if (args != 2):
         print("either run python usb_total.py game.nsp OR drag and drop the game onto the python file (if python is in your path)")
         sys.exit(1)
 
     nsp_name = Path(sys.argv[1])
 
     if not nsp_name.is_file():
-        raise ValueError('must be a .nsp file!!!!!')
+        raise ValueError('must be a file!!!!!')
 
     # Find the switch
     print("waiting for to find the switch...\n")

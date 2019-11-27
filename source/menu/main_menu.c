@@ -69,7 +69,7 @@ void menu_main()
                     {
                         case -1: break;
                         case -2: return;
-                        default: remote_install_start(location_res, NTWRK_INSTALL);
+                        default: remote_install_start(location_res, USB_INSTALL);
                     }
                     break;
                 case HTTP:
@@ -87,6 +87,7 @@ void menu_main()
         }
 
         // exit
-        if (kDown & KEY_PLUS || kDown & KEY_B) break;
+        if (kDown & KEY_PLUS || kDown & KEY_B)
+            break;
     }
 }
