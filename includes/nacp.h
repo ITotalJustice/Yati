@@ -10,7 +10,7 @@ Result nacp_get_lang_entry(NacpStruct *nacp, NacpLanguageEntry **out);
 //
 Result nacp_get_lang_entry_from_app_id(u64 app_id, NacpLanguageEntry **out);
 
-//
+// 
 Result nacp_get_lang_entry_from_rights_id(FsRightsId rights_id, NacpLanguageEntry **out);
 
 

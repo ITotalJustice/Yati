@@ -12,11 +12,9 @@
 #define YES         1
 #define NO          0
 
-#define LIST_MAX    20
 #define ROOT        "sdmc:/"
 
 #define BUFFER_MAX          512
-#define Megabytes_in_Bytes	0x100000
 
 
 typedef struct file_info

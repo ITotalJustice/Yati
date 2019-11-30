@@ -16,11 +16,11 @@
 enum
 {
     SD      = 0,
-    USB     = 1,
-    HTTP    = 2,
-    SIGS    = 3,
-    GC      = 4,
-    TICKET  = 5
+    GC      = 1,
+    USB     = 2,
+    HTTP    = 3,
+    TICKET  = 4,
+    SIGS    = 5,
 } MainMenuSelected;
 
 
@@ -29,7 +29,7 @@ void print_main_menu(const char **location_options, unsigned int location_cursor
     consoleClear();
     printf("YATI (yet another title installer). Select an option:\n\n\n");
 
-    for (int i = 0; i < list_max; i++)
+    for (u8 i = 0; i < list_max; i++)
     {
         if (location_cursor == i)
             printf("[X] %s\n\n", location_options[i]);
@@ -45,12 +45,12 @@ void menu_main()
     u8 main_menu_cursor_max = 6;
     const char *main_menu_option[] =
     {
-        "sd card install",
-        "USB (UNSTABLE)",
-        "HTTP install",
-        "sigpatch update",
-        "GC install (IDK IF THIS WORKS)",
-        "Ticket menu"
+        "SdCard install",
+        "GameCard install",
+        "USB install",
+        "Network install",
+        "Ticket browser",
+        "Sigpatch update"
     };
 
     print_main_menu(main_menu_option, main_menu_cursor, main_menu_cursor_max);
@@ -83,6 +83,16 @@ void menu_main()
                         return;
                     break;
                 }
+                case GC:
+                {
+                    switch (location_res = select_install_location())
+                    {
+                        case -1: break;
+                        case -2: return;
+                        default: gc_menu_start(location_res);
+                    }
+                    break;
+                }
                 case USB:
                 {
                     switch (location_res = select_install_location())
@@ -103,21 +113,13 @@ void menu_main()
                     }
                     break;
                 }
-                case SIGS:
-                    sigpatch_menu();
-                case GC:
-                {
-                    switch (location_res = select_install_location())
-                    {
-                        case -1: break;
-                        case -2: return;
-                        default: gc_menu_start(location_res);
-                    }
-                    break;
-                }
                 case TICKET:
                 {
                     ticket_menu();
+                }
+                case SIGS:
+                {
+                    sigpatch_menu();
                 }
             }
             print_main_menu(main_menu_option, main_menu_cursor, main_menu_cursor_max);

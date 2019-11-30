@@ -7,8 +7,8 @@
 
 #include <switch.h>
 
-#define TEMP_FILE "temp"
-
+#define TEMP_FILE   "temp"
+#define LIST_MAX    20 // for use with ui listing.
 
 typedef enum
 {

@@ -41,3 +41,11 @@ Result nacp_get_lang_entry_from_rights_id(FsRightsId rights_id, NacpLanguageEntr
     u64 app_id = fs_get_app_id_from_rights_id(rights_id);
     return nacp_get_lang_entry_from_app_id(app_id, out);
 }
+
+void nacp_zero_nnid_required_bit(NacpStruct *nacp)
+{
+    // check against database to see if game should be set to zero.
+    // return error codes based on response.
+    // have this function callable by the user
+    nacp->requiredNetworkServiceLicenseOnLaunch = 0;
+}

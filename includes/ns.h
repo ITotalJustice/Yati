@@ -4,37 +4,37 @@
 #include <switch.h>
 
 
-//
-size_t ns_get_storage_total_size(NcmStorageId storage_id);
+// returns the total size of the sd card.
+size_t ns_get_sd_storage_total_size();
 
-//
-size_t ns_get_storage_free_space(NcmStorageId storage_id);
+// returns the free space on the sd card.
+size_t ns_get_sd_storage_free_space();
 
 // store data found to out.
 // make sure to set the size of the out large enough.
 // returns the total stored.
-int ns_list_app_record(NsApplicationRecord *out, s32 count, s32 offset);
+s32 ns_list_app_record(NsApplicationRecord *out, s32 count, s32 offset);
 
 //
-int ns_list_app_cnmt_status(NsApplicationContentMetaStatus *out, s32 count, u64 app_id);
+s32 ns_list_app_cnmt_status(NsApplicationContentMetaStatus *out, s32 count, u64 app_id);
 
 // store data to out.
 Result ns_get_app_control_data(NsApplicationControlData *out, u64 app_id);
 
 //
-int ns_get_app_delivery_info(NsApplicationDeliveryInfo *out, s32 count, u64 app_id, u32 attr);
+s32 ns_get_app_delivery_info(NsApplicationDeliveryInfo *out, s32 count, u64 app_id, u32 attr);
 
 //
 bool ns_check_app_delivery_info(const NsApplicationDeliveryInfo *info);
 
 //
-int ns_compare_app_delivery_info(const NsApplicationDeliveryInfo *info0, const NsApplicationDeliveryInfo *info1);
+s32 ns_compare_app_delivery_info(const NsApplicationDeliveryInfo *info0, const NsApplicationDeliveryInfo *info1);
 
 //
 bool ns_check_if_can_deliver_app_info(NsApplicationDeliveryInfo *info0, s32 count0, NsApplicationDeliveryInfo *info1);
 
 //
-int ns_list_content_meta_key(NcmContentMetaKey *meta, NsApplicationDeliveryInfo *info);
+s32 ns_list_content_meta_key(NcmContentMetaKey *meta, NsApplicationDeliveryInfo *info);
 
 
 /*

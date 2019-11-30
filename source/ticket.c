@@ -12,6 +12,101 @@
 */
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include <switch.h>
 
 #include "ticket.h"
+#include "es.h"
+#include "nacp.h"
+#include "util.h"
+
+
+bool ticket_get_tik_total(tik_struct_t *tik)
+{
+    if (!(tik->common_total = es_count_common_tik()) && !(tik->personalised_total = es_count_personailsed_tik()))
+    {
+        print_message_loop_lock("no tickets installed\n");
+        return false;
+    }
+    tik->total = tik->common_total + tik->personalised_total;
+    return true;
+}
+
+bool ticket_read_common(tik_struct_t *tik)
+{
+    FsRightsId *rights_id = malloc(tik->common_total * sizeof(FsRightsId));
+    memset(rights_id, 0, tik->common_total * sizeof(FsRightsId));
+
+    if (R_FAILED(es_list_common_tik(rights_id, tik->common_total)))
+    {
+        free(rights_id);
+        return false;
+    }
+    
+    // fill in tik_info.
+    for (u32 i = 0; i < tik->common_total; i++)
+    {
+        NacpLanguageEntry *lang_entry = NULL;
+        nacp_get_lang_entry_from_rights_id(rights_id[i], &lang_entry);
+
+        if (lang_entry == NULL)
+            snprintf(tik->info[i].name, 0x200, "%016lu", (u64)rights_id[i].c);
+
+        else
+            snprintf(tik->info[i].name, 0x200, "%s", lang_entry->name);
+        
+        memcpy(&tik->info[i].rights_id, &rights_id[i], sizeof(FsRightsId));
+        tik->info[i].type = common_ticket;
+    }
+    
+    // we are done with this now...
+    free(rights_id);
+    return true;
+}
+
+bool ticket_read_personalised(tik_struct_t *tik)
+{
+    FsRightsId *rights_id = malloc(tik->personalised_total * sizeof(FsRightsId));
+    memset(rights_id, 0, tik->personalised_total * sizeof(FsRightsId));
+
+    if (R_FAILED(es_list_common_tik(rights_id, tik->personalised_total)))
+    {
+        free(rights_id);
+        return false;
+    }
+    
+    // fill in tik_info.
+    for (u32 i = tik->common_total; i < tik->total; i++)
+    {
+        NacpLanguageEntry *lang_entry = NULL;
+        nacp_get_lang_entry_from_rights_id(rights_id[i], &lang_entry);
+
+        if (lang_entry == NULL)
+            snprintf(tik->info[i].name, 0x200, "%016lx", *(u64 *)rights_id[i].c);
+
+        else
+            snprintf(tik->info[i].name, 0x200, "%s", lang_entry->name);
+        
+        memcpy(&tik->info[i].rights_id, &rights_id[i], sizeof(FsRightsId));
+        tik->info[i].type = personalised_ticket;
+    }
+    
+    // we are done with this now...
+    free(rights_id);
+    return true;
+}
+
+bool ticket_setup_tik_info(tik_struct_t *tik)
+{
+    if (tik->common_total)
+        if (!ticket_read_common(tik))
+            return false;
+
+    if (tik->personalised_total)
+        if (!ticket_read_personalised(tik))
+            return false;
+
+    return true;
+} 
