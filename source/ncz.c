@@ -53,14 +53,14 @@ int ncz_get_section(ncz_structs_t *ptr, u64 offset)
     return -1;
 }
 
-void ncz_encryption_setup(ncz_structs_t *ptr, u_int8_t *buf, size_t buf_size, u64 written_offset)
+void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, u64 written_offset)
 {
     size_t back_up_size = buf_size;
     for (size_t buf_start_offset = 0; buf_start_offset < back_up_size;)
     {
         int loc = ncz_get_section(ptr, written_offset);
         size_t total_size = ptr->sections[loc].offset + ptr->sections[loc].decompressed_size;
-        u_int64_t chunk = buf_size;
+        u64 chunk = buf_size;
 
         if (written_offset + buf_size > total_size)
             chunk = total_size - written_offset;
@@ -96,8 +96,8 @@ void ncz_temp(ncz_structs_t *ptr)
         // TODO: make this into a data struct.
         size_t output_chunk_size = ZSTD_DStreamOutSize();
         size_t data_size = buf_size * 2;
-        u_int8_t *data_buf = malloc(data_size);
-        u_int64_t data_stored = 0;
+        u8 *data_buf = malloc(data_size);
+        u64 data_stored = 0;
 
         // loop until all data is decompressed.
         while (input.pos < input.size)
@@ -144,7 +144,7 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
 
     read_data_from_protocal(mode, data, NCZ_HEADER_OFFSET, offset, f, NULL);
     nca_encrypt_decrypt_xts(data, data, 0, NCZ_HEADER_OFFSET, NCA_DECRYPT);
-    data->header.distribution_type = 0; // for xci installs.
+    nca_set_distribution_type_to_system(&data->header);
 
     ptr.nca.nca_file        = f;
     ptr.nca.mode            = mode;

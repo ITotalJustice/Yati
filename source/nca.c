@@ -37,12 +37,12 @@ void *nca_get_header(nca_struct_t *nca_struct)
     return out;
 }
 
-void *nca_encrypt_ctr(void *out, const void *in, u_int8_t *key, u_int8_t *counter, size_t size, u_int64_t offset)
+void *nca_encrypt_ctr(void *out, const void *in, u8 *key, u8 *counter, size_t size, u64 offset)
 {
     Aes128CtrContext ctx;
     aes128CtrContextCreate(&ctx, key, counter);
 
-    u_int64_t swp = __bswap64(offset >> 4);
+    u64 swp = __bswap64(offset >> 4);
     memcpy(&counter[0x8], &swp, 0x8);
     aes128CtrContextResetCtr(&ctx, counter);
     aes128CtrCrypt(&ctx, out, in, size);
@@ -50,11 +50,11 @@ void *nca_encrypt_ctr(void *out, const void *in, u_int8_t *key, u_int8_t *counte
     return out;
 }
 
-void *nca_encrypt_decrypt_xts(void *out, const void *in, u_int64_t sector, size_t size, NcaEncrpytMode mode)
+void *nca_encrypt_decrypt_xts(void *out, const void *in, u64 sector, size_t size, NcaEncrpytMode mode)
 {
-    u_int8_t key[0x20] = { 0xAE, 0xAA, 0xB1, 0xCA, 0x08, 0xAD, 0xF9, 0xBE, 0xF1, 0x29, 0x91, 0xF3, 0x69, 0xE3, 0xC5, 0x67, 0xD6, 0x88, 0x1E, 0x4E, 0x4A, 0x6A, 0x47, 0xA5, 0x1F, 0x6E, 0x48, 0x77, 0x06, 0x2D, 0x54, 0x2D };
-    u_int8_t ip1[0x10] = { 0 };
-    u_int8_t ip2[0x10] = { 0 };
+    u8 key[0x20] = { 0xAE, 0xAA, 0xB1, 0xCA, 0x08, 0xAD, 0xF9, 0xBE, 0xF1, 0x29, 0x91, 0xF3, 0x69, 0xE3, 0xC5, 0x67, 0xD6, 0x88, 0x1E, 0x4E, 0x4A, 0x6A, 0x47, 0xA5, 0x1F, 0x6E, 0x48, 0x77, 0x06, 0x2D, 0x54, 0x2D };
+    u8 ip1[0x10] = { 0 };
+    u8 ip2[0x10] = { 0 };
 
     memcpy(ip1, key, 0x10);
     memcpy(ip2, &key[0x10], 0x10);
@@ -62,16 +62,16 @@ void *nca_encrypt_decrypt_xts(void *out, const void *in, u_int64_t sector, size_
     Aes128XtsContext ctx;
     aes128XtsContextCreate(&ctx, ip1, ip2, mode);
 
-    for (u_int64_t pos = 0; pos < size; pos += NCA_SECTOR_SIZE)
+    for (u64 pos = 0; pos < size; pos += NCA_SECTOR_SIZE)
     {
         aes128XtsContextResetSector(&ctx, sector++, true);
         switch (mode)
         {
             case NCA_DECRYPT:
-                aes128XtsDecrypt(&ctx, (u_int8_t *)out + pos, (const u_int8_t *)in + pos, NCA_SECTOR_SIZE);
+                aes128XtsDecrypt(&ctx, (u8 *)out + pos, (const u8 *)in + pos, NCA_SECTOR_SIZE);
                 break;
             case NCA_ENCRYPT:
-                aes128XtsEncrypt(&ctx, (u_int8_t *)out + pos, (const u_int8_t *)in + pos, NCA_SECTOR_SIZE);
+                aes128XtsEncrypt(&ctx, (u8 *)out + pos, (const u8 *)in + pos, NCA_SECTOR_SIZE);
                 break;
         }
     }
@@ -140,16 +140,18 @@ Result nca_setup_placeholder(ncm_install_struct_t *ncm, const char *name, size_t
     return rc;
 }
 
-Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2)
+void nca_set_distribution_type_to_system(nca_header_t *header)
+{
+    header->distribution_type = NcaDistributionType_System;
+}
+
+Result nca_start_install(const char *name, u64 offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2)
 {
     Result rc = 0;
     nca_struct_t nca_struct;
 
     // TODO VERIFY NCA.
-    // decrypt nca header.
-    // set distribution type bit to 0.
     // should verify nca as well at this point.
-    // will make this its own funtion soontm.
     nca_header_t nca_header;
     read_data_from_protocal(mode, &nca_header, NCA_HEADER_SIZE, offset, f, f2);
     nca_encrypt_decrypt_xts(&nca_header, &nca_header, 0, NCA_HEADER_SIZE, NCA_DECRYPT);
