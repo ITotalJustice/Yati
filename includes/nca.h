@@ -60,6 +60,26 @@ typedef enum
     NcaKeyAreaEncryptionKeyIndex_System         = 0x2
 } NcaKeyAreaEncryptionKeyIndex;
 
+typedef enum
+{
+    NcaFileSystemType_RomFS = 0x0,
+    NcaFileSystemType_PFS0  = 0x1
+} NcaFileSystemType;
+
+typedef enum
+{
+    NcaHashType_PFS0    = 0x2,
+    NcaHashType_RomFS   = 0x3
+} NcaHashType;
+
+typedef enum
+{
+    NcaEncryptionType_None      = 0x1,
+    NcaEncryptionType_AesCtrOld = 0x2,
+    NcaEncryptionType_AesCtr    = 0x3,
+    NcaEncryptionType_AesCtrEx  = 0x4
+} NcaEncryptionType;
+
 typedef struct
 {
     u8 rsa_fixed_key[0x100];
@@ -80,9 +100,17 @@ typedef struct
     u8 idk[0x40];
     u8 idk2[0x80];
     u8 key_area[0x40];
-
-    u8 free[0x120];
 } nca_header_t;
+
+typedef struct
+{
+    u16 version;            // always 2.
+    u8 file_system_type;    // see NcaFileSystemType.
+    u8 hash_type;           // see NcaHashType.
+    u8 encryption_type;     // see NcaEncryptionType.
+    u8 padding;
+    u8 fs_super_block[0xF8];
+} nca_section_header_t;
 
 typedef struct
 {
