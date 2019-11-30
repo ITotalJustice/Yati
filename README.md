@@ -40,7 +40,7 @@ __**Misc**__
 * nca verification.
 * option remove account dependency (useful for apps such as youtube which require a linked account). This can be easily done by parsing the control nca and changing the bit at offset `0x3213` to 0.
 * python script to split all file types, with a gui (very low priority).
-~~* gamecard direct install (install a game directly from the cart).~~ added!
+* ~~gamecard direct install (install a game directly from the cart).~~ added!
 * dump games to any format (ncas, nsp, xci, nsz, xsz).
 * usb hdd support for sx users.
 * gui for the app (will do this last).
