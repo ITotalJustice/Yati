@@ -3,6 +3,7 @@
 
 #include <switch.h>
 
+
 typedef struct
 {
     NcmContentMetaKey metaRecord;
@@ -96,5 +97,8 @@ s64 ncm_get_storage_free_space(NcmStorageId storage_id);
 
 // get the total size of the selected storage device (sd card / nand).
 s64 ncm_get_storage_total_size(NcmStorageId storage_id);
+
+//
+u64 ncm_get_app_id_from_title_id(u64 title_id, NcmContentMetaType contentMetaType);
 
 #endif

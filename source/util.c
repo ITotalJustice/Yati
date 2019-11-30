@@ -8,6 +8,7 @@
 #include <switch.h>
 
 #include "util.h"
+#include "fs.h"
 #include "usb.h"
 #include "network.h"
 
@@ -342,6 +343,39 @@ void move_folder(const char *src, char *dest)
     closedir(dir);
 }
 
+bool parse_search_from_file(const char *file, const char *filter, char *out_string)
+{    
+    FILE *fp = open_file(file, "r");
+    if (!fp)
+        return false;
+
+    char c;
+    while ((c = fgetc(fp)) != EOF)
+    {
+        if (c == *filter)
+        {
+            for (int i = 0, len = strlen(filter) - 1; c == filter[i]; i++)
+            {
+                c = fgetc(fp);
+                if (i == len)
+                {
+                    for (int j = 0; c != '\"'; j++)
+                    {
+                        out_string[j] = c;
+                        out_string[j + 1] = '\0';
+                        c = fgetc(fp);
+                    }
+                    fclose(fp);
+                    return true;
+                }
+            }
+        }
+    }
+    print_message_loop_lock("unable to parse search using filter %s\npress b to exit\n", filter);
+    fclose(fp);
+    return false;
+}
+
 void keyboard(char *buffer, const char *clipboard, ...)
 {
     char new_message[FS_MAX_PATH];
@@ -400,23 +434,48 @@ void print_message_loop_lock(const char* message, ...)
     }
 }
 
-void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int64_t offset, FILE *f)
+void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int64_t offset, FILE *f, FsFile *f2)
 {
     u_int8_t *data_temp = memalign(0x1000, size);
 
     switch (mode)
     {
         case SD_CARD_INSTALL:
+        {
             read_file(data_temp, size, offset, f);
             break;
+        }
         case USB_INSTALL:
+        {
             usb_read(data_temp, size, offset);
             break;
+        }
         case NTWRK_INSTALL:
+        {
             ntwrk_setup_download(data_temp, size, offset);
             break;
+        }
+        case GC_INSTALL:
+        {
+            fs_read_file(data_temp, size, offset, FsReadOption_None, f2);
+            break;
+        }
     }
 
     memcpy(out, data_temp, size);
     free(data_temp);
 }
+
+void *mem_alloc(size_t size)
+{
+    void *mem = malloc(size);
+    if (mem == NULL)
+        print_message_loop_lock("failed to alloc mem with size %lu\n", size);
+    memset(mem, 0, size);
+    return mem;
+}
+
+
+/*
+*   NX functions.
+*/

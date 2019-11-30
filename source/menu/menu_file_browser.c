@@ -74,9 +74,12 @@ void print_dir()
 
     for (size_t i = 0, j = list_move; i < folder_info->total && i < LIST_MAX; i++, j++)
     {
-        if (file_info[j]->selected) printf("(*) ");
-        if (j == cursor)    printf("[X] %s\n\n", file_info[j]->file_name);
-        else                printf("[ ] %s\n\n", file_info[j]->file_name);
+        if (file_info[j]->selected)
+            printf("(*) ");
+        if (j == cursor)
+            printf("[X] %s\n\n", file_info[j]->file_name);
+        else
+            printf("[ ] %s\n\n", file_info[j]->file_name);
     }
 
     consoleUpdate(NULL);

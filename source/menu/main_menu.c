@@ -9,6 +9,8 @@
 #include "menu/menu_install_location.h"
 #include "menu/menu_sigpatch.h"
 #include "menu/menu_remote_install.h"
+#include "menu/menu_gc.h"
+#include "menu/menu_tickets.h"
 
 
 enum
@@ -17,7 +19,10 @@ enum
     USB     = 1,
     HTTP    = 2,
     SIGS    = 3,
+    GC      = 4,
+    TICKET  = 5
 } MainMenuSelected;
+
 
 void print_main_menu(const char **location_options, unsigned int location_cursor, unsigned int list_max)
 {
@@ -26,8 +31,10 @@ void print_main_menu(const char **location_options, unsigned int location_cursor
 
     for (int i = 0; i < list_max; i++)
     {
-        if (location_cursor == i)   printf("[X] %s\n\n", location_options[i]);
-        else                        printf("[ ] %s\n\n", location_options[i]);
+        if (location_cursor == i)
+            printf("[X] %s\n\n", location_options[i]);
+        else
+            printf("[ ] %s\n\n", location_options[i]);
     }
     consoleUpdate(NULL);
 }
@@ -35,8 +42,17 @@ void print_main_menu(const char **location_options, unsigned int location_cursor
 void menu_main()
 {
     u8 main_menu_cursor = 0;
-    u8 main_menu_cursor_max = 4;
-    const char *main_menu_option[] = { "sd card install", "USB (UNSTABLE)", "HTTP install", "sigpatch update" } ;
+    u8 main_menu_cursor_max = 6;
+    const char *main_menu_option[] =
+    {
+        "sd card install",
+        "USB (UNSTABLE)",
+        "HTTP install",
+        "sigpatch update",
+        "GC install (IDK IF THIS WORKS)",
+        "Ticket menu"
+    };
+
     print_main_menu(main_menu_option, main_menu_cursor, main_menu_cursor_max);
 
     while (appletMainLoop())
@@ -62,9 +78,13 @@ void menu_main()
             switch (main_menu_cursor)
             {
                 case SD:
-                    if (directory_menu()) return;
+                {
+                    if (directory_menu())
+                        return;
                     break;
+                }
                 case USB:
+                {
                     switch (location_res = select_install_location())
                     {
                         case -1: break;
@@ -72,7 +92,9 @@ void menu_main()
                         default: remote_install_start(location_res, USB_INSTALL);
                     }
                     break;
+                }
                 case HTTP:
+                {
                     switch (location_res = select_install_location())
                     {
                         case -1: break;
@@ -80,8 +102,23 @@ void menu_main()
                         default: remote_install_start(location_res, NTWRK_INSTALL);
                     }
                     break;
+                }
                 case SIGS:
                     sigpatch_menu();
+                case GC:
+                {
+                    switch (location_res = select_install_location())
+                    {
+                        case -1: break;
+                        case -2: return;
+                        default: gc_menu_start(location_res);
+                    }
+                    break;
+                }
+                case TICKET:
+                {
+                    ticket_menu();
+                }
             }
             print_main_menu(main_menu_option, main_menu_cursor, main_menu_cursor_max);
         }

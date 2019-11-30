@@ -76,10 +76,7 @@ void setup_app_dir(const char *nro)
     if (check_if_file_exists(APP_PATH))
         delete_file(APP_PATH);
     move_file(nro, APP_PATH);
-    change_dir(APP_DIR);
 }
-
-#include <malloc.h>
 
 int main(int argc, char *argv[])
 {

@@ -46,6 +46,7 @@ typedef struct
     InstallProtocal mode;               // see InstallProtocal.
     ncm_install_struct_t ncm;
 
+    FsFile *nca_file2;
     FILE *nca_file;                     // only used if mode == SD_CARD_INSTALL.
     size_t nca_size;                    // size of the nca.
     u_int64_t offset;                   // offset of the file.
@@ -63,9 +64,6 @@ const char *nca_get_string_from_id(const NcmContentId nca_id, char *nca_string_o
 // return the nca_id from the string.
 NcmContentId nca_get_id_from_string(const char *nca_string);
 
-// return the base title_id.
-u_int64_t nca_get_base_id(u_int64_t title_id, NcmContentMetaType contentMetaType);
-
 //
 void *nca_encrypt_ctr(void *out, const void *in, u_int8_t *key, u_int8_t *counter, size_t size, u_int64_t offset);
 
@@ -82,7 +80,7 @@ Result nca_register_placeholder(ncm_install_struct_t *ncm);
 Result nca_setup_placeholder(ncm_install_struct_t *ncm, const char *name, size_t size, NcmStorageId storage_id);
 
 // start installing the nca.
-Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f);
+Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2);
 
 // installs a single nca.
 // TODO: add support for cnmt full install.

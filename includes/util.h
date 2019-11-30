@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <dirent.h>
 
+#include <switch.h>
 
 #define TEMP_FILE "temp"
 
@@ -14,7 +15,22 @@ typedef enum
     SD_CARD_INSTALL = 0,
     USB_INSTALL     = 1,
     NTWRK_INSTALL   = 2,
+    GC_INSTALL      = 3,
 } InstallProtocal;
+
+typedef enum
+{
+    _1kb = 0x400,
+
+    _1MiB = 0x100000,
+    _2MiB = 0x200000,
+    _3MiB = 0x300000,
+    _4MiB = 0x400000,
+    _5MiB = 0x500000,
+    _6MiB = 0x600000,
+    _7MiB = 0x700000,
+    _8MiB = 0x800000
+} buffer_sizes;
 
 
 /*
@@ -99,6 +115,9 @@ void copy_file(const char *src, char *dest);
 // move file (rename).
 void move_file(const char *src, char *dest);
 
+//
+bool parse_search_from_file(const char *file, const char *filter, char* out_string);
+
 
 /*
 *   MESSAGE DISPLAY FUNCTIONS.
@@ -134,7 +153,7 @@ void read_file(void *out, size_t size, u_int64_t offset, FILE *f);
 // size: size of the data to read.
 // offset: starting point of the data.
 // f: optional file, only used if protocal is sd install.
-void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int64_t offset, FILE *f);
+void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int64_t offset, FILE *f, FsFile *f2);
 
 
 /*
@@ -147,6 +166,14 @@ void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int
 // path: file to dump data to.
 // mode: file mode. supported modes are w, wb, w+, wb+
 size_t debug_dump_info(const void *buf, size_t buf_size, const char *path, const char *mode);
+
+
+/*
+*   MISC functions.
+*/
+
+//
+void *mem_alloc(size_t size);
 
 
 #endif

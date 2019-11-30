@@ -22,7 +22,8 @@ bool http_check_if_file_exists()
 {
     print_message_display("checking for http file...\n");
     FILE *f = open_file(HTTP_TEXT_FILE, "r");
-    if (!f) return false;
+    if (!f)
+        return false;
 
     memset(url, 0, FS_MAX_PATH);
     fread(url, get_filesize(HTTP_TEXT_FILE), 1, f);
@@ -37,9 +38,6 @@ bool remote_install_start(NcmStorageId storage_id, InstallProtocal mode)
 
     switch (mode)
     {
-        case SD_CARD_INSTALL:
-            print_message_loop_lock("this shouldn't happen...\n");
-            return false;
         case NTWRK_INSTALL:
             if (!http_check_if_file_exists()) return false;
             if (!ntwrk_start(url)) return false;
@@ -47,10 +45,13 @@ bool remote_install_start(NcmStorageId storage_id, InstallProtocal mode)
         case USB_INSTALL:
             // init usb here
             break;
+        default:
+            print_message_loop_lock("this shouldn't happen...\n");
+            return false;
     }
 
     print_message_display("getting file magic...\n");
-    read_data_from_protocal(mode, &magic, sizeof(u_int32_t), 0, NULL);
+    read_data_from_protocal(mode, &magic, sizeof(u_int32_t), 0, NULL, NULL);
 
     if (pfs0_check_valid_magic(magic))
     {
@@ -66,15 +67,15 @@ bool remote_install_start(NcmStorageId storage_id, InstallProtocal mode)
     //cleanup
     switch (mode)
     {
-        case SD_CARD_INSTALL:
-            print_message_loop_lock("this shouldn't happen...\n");
-            return false;
         case NTWRK_INSTALL:
             ntwrk_exit();
             break;
         case USB_INSTALL:
             usb_exit();
             break;
+        default:
+            print_message_loop_lock("this shouldn't happen...\n");
+            return false;
     }
 
     return true;

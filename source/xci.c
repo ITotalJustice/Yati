@@ -41,7 +41,7 @@ void xci_start_install(xci_structs_t *ptr, NcmStorageId storage_id, InstallProto
     if (loc == -1)
         return;
 
-    if (R_FAILED(nca_start_install(ptr->hfs0_secure.string_table[loc].name, ptr->hfs0_secure.raw_data_offset + ptr->hfs0_secure.file_table[loc].data_offset, storage_id, mode, ptr->f)))
+    if (R_FAILED(nca_start_install(ptr->hfs0_secure.string_table[loc].name, ptr->hfs0_secure.raw_data_offset + ptr->hfs0_secure.file_table[loc].data_offset, storage_id, mode, ptr->f, NULL)))
     {
         print_message_loop_lock("failed to install cnmt\n");
         return;
@@ -72,7 +72,7 @@ void xci_start_install(xci_structs_t *ptr, NcmStorageId storage_id, InstallProto
 
         else
         {
-            if (R_FAILED(nca_start_install(ptr->hfs0_secure.string_table[loc].name, ptr->hfs0_secure.raw_data_offset + ptr->hfs0_secure.file_table[loc].data_offset, storage_id, mode, ptr->f)))
+            if (R_FAILED(nca_start_install(ptr->hfs0_secure.string_table[loc].name, ptr->hfs0_secure.raw_data_offset + ptr->hfs0_secure.file_table[loc].data_offset, storage_id, mode, ptr->f, NULL)))
             {
                 print_message_loop_lock("\nfailed to install %s\n", ptr->hfs0_secure.string_table[loc].name);
                 break;

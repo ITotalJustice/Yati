@@ -22,8 +22,8 @@ void cnmt_push_record(cnmt_header_t *cnmt_header, cnmt_struct_t *cnmt_struct, vo
     // set up cnmt record.
     ContentStorageRecord cnmt_storage_record = { cnmt_key, cnmt_struct->storage_id };
 
-    // get the base_id and setup data.
-    u_int64_t base_title_id = nca_get_base_id(cnmt_key.id, cnmt_key.type);
+    // get the app_id and setup data.
+    u_int64_t app_id = ncm_get_app_id_from_title_id(cnmt_key.id, cnmt_key.type);
     size_t data_size = sizeof(NcmContentMetaHeader) + ncm_cnmt_header.extended_header_size + (sizeof(NcmContentInfo) * ncm_cnmt_header.content_count);
     u_int8_t *data = malloc(data_size);
 
@@ -47,14 +47,14 @@ void cnmt_push_record(cnmt_header_t *cnmt_header, cnmt_struct_t *cnmt_struct, vo
     size_t app_record_size = 0;
 
     // check if any app_cnmt data exists, if so, add it to the start of the app_record buffer.
-    u_int32_t cnmt_count = ns_count_application_content_meta(base_title_id);
+    u_int32_t cnmt_count = ns_count_application_content_meta(app_id);
     if (cnmt_count)
     {
         app_record_size = cnmt_count * sizeof(ContentStorageRecord);
         u_int8_t *old_app_buf = malloc(app_record_size);
         memset(old_app_buf, 0, app_record_size);
 
-        ns_list_application_record_content_meta(0, base_title_id, old_app_buf, app_record_size, cnmt_count);
+        ns_list_application_record_content_meta(0, app_id, old_app_buf, app_record_size, cnmt_count);
 
         app_record = realloc(app_record, app_record_size + sizeof(ContentStorageRecord)); // 
         memcpy(app_record, old_app_buf, app_record_size);
@@ -63,8 +63,8 @@ void cnmt_push_record(cnmt_header_t *cnmt_header, cnmt_struct_t *cnmt_struct, vo
 
     // push record.
     memcpy(&app_record[app_record_size], &cnmt_storage_record, sizeof(ContentStorageRecord));
-    ns_delete_application_record(base_title_id);
-    ns_push_application_record(base_title_id, (ContentStorageRecord *)app_record, app_record_size + sizeof(ContentStorageRecord));
+    ns_delete_application_record(app_id);
+    ns_push_application_record(app_id, (ContentStorageRecord *)app_record, app_record_size + sizeof(ContentStorageRecord));
     free(app_record);
 }
 
@@ -75,7 +75,7 @@ void *cnmt_set_ext_header(cnmt_struct_t *cnmt_struct, cnmt_header_t cnmt_header,
     if (cnmt_header.meta_type == NcmContentMetaType_Application)
     {
         NcmApplicationMetaExtendedHeader ext_header;
-        *offset += fs_read_file(&cnmt_struct->cnmt_file, *offset, &ext_header, sizeof(NcmApplicationMetaExtendedHeader), FsReadOption_None);
+        *offset += fs_read_file(&ext_header, sizeof(NcmApplicationMetaExtendedHeader), *offset, FsReadOption_None, &cnmt_struct->cnmt_file);
         ext_header.required_system_version = 0;
         ext_data = malloc(sizeof(NcmApplicationMetaExtendedHeader));
         memcpy(ext_data, &ext_header, sizeof(NcmApplicationMetaExtendedHeader));
@@ -83,7 +83,7 @@ void *cnmt_set_ext_header(cnmt_struct_t *cnmt_struct, cnmt_header_t cnmt_header,
     else if (cnmt_header.meta_type == NcmContentMetaType_Patch)
     {
         NcmPatchMetaExtendedHeader ext_header;
-        *offset += fs_read_file(&cnmt_struct->cnmt_file, *offset, &ext_header, sizeof(NcmPatchMetaExtendedHeader), FsReadOption_None);
+        *offset += fs_read_file(&ext_header, sizeof(NcmPatchMetaExtendedHeader), *offset, FsReadOption_None, &cnmt_struct->cnmt_file);
         ext_header.required_system_version = 0;
         ext_data = malloc(sizeof(NcmPatchMetaExtendedHeader));
         memcpy(ext_data, &ext_header, sizeof(NcmPatchMetaExtendedHeader));
@@ -91,7 +91,7 @@ void *cnmt_set_ext_header(cnmt_struct_t *cnmt_struct, cnmt_header_t cnmt_header,
     else
     {
         ext_data = malloc(sizeof(NcmAddOnContentMetaExtendedHeader));
-        *offset += fs_read_file(&cnmt_struct->cnmt_file, *offset, ext_data, sizeof(NcmAddOnContentMetaExtendedHeader), FsReadOption_None);
+        *offset += fs_read_file(ext_data, sizeof(NcmAddOnContentMetaExtendedHeader), *offset, FsReadOption_None, &cnmt_struct->cnmt_file);
     }
 
     return ext_data;
@@ -103,7 +103,7 @@ void cnmt_read_data(cnmt_struct_t *cnmt_struct)
     u_int64_t offset = 0;
 
     // main header.
-    offset += fs_read_file(&cnmt_struct->cnmt_file, offset, &cnmt_header, sizeof(cnmt_header_t), FsReadOption_None);
+    offset += fs_read_file(&cnmt_header, sizeof(cnmt_header_t), offset, FsReadOption_None, &cnmt_struct->cnmt_file);
 
     // get extended header data.
     void *ext_data = cnmt_set_ext_header(cnmt_struct, cnmt_header, &offset);
@@ -119,7 +119,7 @@ void cnmt_read_data(cnmt_struct_t *cnmt_struct)
     for (u_int32_t i = 0; i < cnmt_header.content_count; i++)
     {
         NcmPackagedContentInfo packed_temp;
-        offset += fs_read_file(&cnmt_struct->cnmt_file, offset, &packed_temp, sizeof(NcmPackagedContentInfo), FsReadOption_None);
+        offset += fs_read_file(&packed_temp, sizeof(NcmPackagedContentInfo), offset, FsReadOption_None, &cnmt_struct->cnmt_file);
 
         // skip deltas...
         if (packed_temp.info.content_type == NcmContentType_DeltaFragment)
@@ -139,23 +139,12 @@ void cnmt_read_data(cnmt_struct_t *cnmt_struct)
 
 Result cnmt_open_cnmt_file(FsFileSystem *cnmt_system, FsDir *cnmt_dir, cnmt_struct_t *cnmt_struct)
 {
-    size_t total_entries = fs_get_dir_total(cnmt_dir);
-    FsDirectoryEntry *entries = malloc(total_entries * sizeof(FsDirectoryEntry));
-    fs_read_dir(cnmt_dir, 0, total_entries, entries);
-
-    for (size_t i = 0; i < total_entries; i++)
-    {
-        if (strstr(entries[i].name, ".cnmt"))
-        {
-            Result rc = fs_open_file(cnmt_system, FsOpenMode_Read, &cnmt_struct->cnmt_file, "/%s", entries[i].name);
-            free(entries);
-            return rc;
-        }
-    }
-    
-    printf("couldn't find cnmt file in the cnmt dir\n");
-    free(entries);
-    return 1;
+    FsDirectoryEntry cnmt;
+    if (!fs_search_dir_for_file_2(cnmt_dir, &cnmt, "cnmt"))
+        return 1;
+    if (R_FAILED(fs_open_file(cnmt_system, FsOpenMode_Read, &cnmt_struct->cnmt_file, "/%s", cnmt.name)))
+        return 1;
+    return 0;
 }
 
 Result cnmt_open(cnmt_struct_t *cnmt_struct)

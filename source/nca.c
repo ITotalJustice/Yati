@@ -10,43 +10,30 @@
 #include "util.h"
 
 
-const char *nca_get_string_from_id(const NcmContentId nca_id, char *nca_string_out)
+const char *nca_get_string_from_id(NcmContentId nca_id, char *nca_string_out)
 {
-    u_int64_t nca_id_lower = __bswap64(*(u_int64_t *)nca_id.c);
-    u_int64_t nca_id_upper = __bswap64(*(u_int64_t *)(nca_id.c + 0x8));
-    snprintf(nca_string_out, FS_MAX_PATH, "%016lx%016lx", nca_id_lower, nca_id_upper);
+    u64 nca_id_lower = __bswap64(*(u64 *)nca_id.c);
+    u64 nca_id_upper = __bswap64(*(u64 *)(nca_id.c + 0x8));
+    snprintf(nca_string_out, 0x21, "%016lx%016lx", nca_id_lower, nca_id_upper);
     return nca_string_out;
 }
 
 NcmContentId nca_get_id_from_string(const char *nca_in_string)
 {
     NcmContentId nca_id     = {0};
-    char lowerU64[17]       = {0};
-    char upperU64[17]       = {0};
+    char lowerU64[0x11]     = {0};
+    char upperU64[0x11]     = {0};
     memcpy(lowerU64, nca_in_string, 16);
     memcpy(upperU64, nca_in_string + 16, 16);
-    *(u_int64_t *)nca_id.c = __bswap64(strtoul(lowerU64, NULL, 16));
-    *(u_int64_t *)(nca_id.c + 8) = __bswap64(strtoul(upperU64, NULL, 16));
+    *(u64 *)nca_id.c = __bswap64(strtoul(lowerU64, NULL, 16));
+    *(u64 *)(nca_id.c + 8) = __bswap64(strtoul(upperU64, NULL, 16));
     return nca_id;
-}
-
-u_int64_t nca_get_base_id(u_int64_t title_id, NcmContentMetaType contentMetaType)
-{
-    switch (contentMetaType)
-    {
-        case NcmContentMetaType_Application:    return title_id;
-        case NcmContentMetaType_Patch:          return title_id ^ 0x800;
-        case NcmContentMetaType_AddOnContent:   return title_id ^ 0x1000;
-        default:
-            print_message_loop_lock("incorrect content meta type %d\n", contentMetaType);
-            return title_id;                              
-    }
 }
 
 void *nca_get_header(nca_struct_t *nca_struct)
 {
     void *out = malloc(NCA_HEADER_SIZE);
-    read_data_from_protocal(nca_struct->mode, out, NCA_HEADER_SIZE, 0, nca_struct->nca_file);
+    read_data_from_protocal(nca_struct->mode, out, NCA_HEADER_SIZE, 0, nca_struct->nca_file, nca_struct->nca_file2);
     return out;
 }
 
@@ -95,15 +82,15 @@ Result nca_single_thread_install(nca_struct_t *nca_struct)
 {
     Result rc = 0;
 
-    for (size_t offset = 0, buf_size = 0x800000; offset < nca_struct->nca_size; offset += buf_size)
+    for (size_t offset = 0, buf_size = _8MiB; offset < nca_struct->nca_size; offset += buf_size)
     {
         if (offset + buf_size > nca_struct->nca_size)
             buf_size = nca_struct->nca_size - offset;
         void *data_temp = malloc(buf_size);
 
-        print_message_display("\twriting file %ldMB - %ldMB\r", nca_struct->data_written / 0x100000, nca_struct->nca_size / 0x100000);
+        print_message_display("\twriting file %ldMB - %ldMB\r", nca_struct->data_written / _1MiB, nca_struct->nca_size / _1MiB);
 
-        read_data_from_protocal(nca_struct->mode, data_temp, buf_size, nca_struct->offset + offset, nca_struct->nca_file);
+        read_data_from_protocal(nca_struct->mode, data_temp, buf_size, nca_struct->offset + offset, nca_struct->nca_file, nca_struct->nca_file2);
         rc = ncm_write_placeholder(&nca_struct->ncm.storage, &nca_struct->ncm.placeholder_id, &nca_struct->data_written, data_temp, buf_size);
         free(data_temp);
 
@@ -153,7 +140,7 @@ Result nca_setup_placeholder(ncm_install_struct_t *ncm, const char *name, size_t
     return rc;
 }
 
-Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f)
+Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2)
 {
     Result rc = 0;
     nca_struct_t nca_struct;
@@ -164,7 +151,7 @@ Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storag
     // should verify nca as well at this point.
     // will make this its own funtion soontm.
     nca_header_t nca_header;
-    read_data_from_protocal(mode, &nca_header, NCA_HEADER_SIZE, offset, f);
+    read_data_from_protocal(mode, &nca_header, NCA_HEADER_SIZE, offset, f, f2);
     nca_encrypt_decrypt_xts(&nca_header, &nca_header, 0, NCA_HEADER_SIZE, NCA_DECRYPT);
     nca_header.distribution_type = 0;
 
@@ -177,6 +164,7 @@ Result nca_start_install(const char *name, u_int64_t offset, NcmStorageId storag
 
     // fill in the needed data to be passed around.
     nca_struct.nca_file     = f;
+    nca_struct.nca_file2    = f2;
     nca_struct.mode         = mode;
     nca_struct.nca_size     = nca_header.nca_size - NCA_HEADER_SIZE;
     nca_struct.offset       = offset + NCA_HEADER_SIZE;
@@ -204,7 +192,7 @@ bool nca_prepare_single_install(const char *file_name, NcmStorageId storage_id)
     if (!f)
         return false;
     
-    nca_start_install(file_name, 0, storage_id, SD_CARD_INSTALL, f);
+    nca_start_install(file_name, 0, storage_id, SD_CARD_INSTALL, f, NULL);
     fclose(f);
 
     if (!strstr(file_name, "cnmt.nca"))
@@ -227,7 +215,7 @@ bool nca_prepare_single_install(const char *file_name, NcmStorageId storage_id)
 
         print_message_display("now installing %s\n", new_nca_name);
 
-        nca_start_install(new_nca_name, 0, storage_id, SD_CARD_INSTALL, f);
+        nca_start_install(new_nca_name, 0, storage_id, SD_CARD_INSTALL, f, NULL);
         fclose(f);
     }
 

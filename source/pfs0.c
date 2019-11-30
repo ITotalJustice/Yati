@@ -14,14 +14,14 @@
 void pfs0_get_header(pfs0_struct_ptr *ptr, InstallProtocal mode)
 {
     memset(&ptr->header, 0, sizeof(pfs0_header_t));
-    read_data_from_protocal(mode, &ptr->header, sizeof(pfs0_header_t), 0x0, ptr->file);
+    read_data_from_protocal(mode, &ptr->header, sizeof(pfs0_header_t), 0x0, ptr->file, NULL);
 }
 
 void pfs0_populate_file_table(pfs0_struct_ptr *ptr, InstallProtocal mode)
 {
     ptr->file_table = malloc(ptr->file_table_size);
     memset(ptr->file_table, 0x0, ptr->file_table_size);
-    read_data_from_protocal(mode,  ptr->file_table, ptr->file_table_size, ptr->file_table_offset, ptr->file);
+    read_data_from_protocal(mode,  ptr->file_table, ptr->file_table_size, ptr->file_table_offset, ptr->file, NULL);
 }
 
 void pfs0_populate_string_table(pfs0_struct_ptr *ptr, InstallProtocal mode)
@@ -31,7 +31,7 @@ void pfs0_populate_string_table(pfs0_struct_ptr *ptr, InstallProtocal mode)
     memset(ptr->string_table, 0, ptr->header.string_table_size);
     memset(data_temp, 0, ptr->header.string_table_size);
 
-    read_data_from_protocal(mode, data_temp, ptr->header.string_table_size, ptr->string_table_offset, ptr->file);
+    read_data_from_protocal(mode, data_temp, ptr->header.string_table_size, ptr->string_table_offset, ptr->file, NULL);
 
     for (u_int32_t i = 0; i < ptr->header.total_files; i++)
     {
@@ -96,13 +96,13 @@ bool pfs0_extract_file(pfs0_struct_ptr *ptr, int location, InstallProtocal mode)
     size_t file_size = ptr->file_table[location].data_size;
     print_message_display("extracting %s: size %lu\n", ptr->string_table[location].name, file_size);
 
-    for (size_t offset = 0, buf_size = 0x800000; offset < file_size; offset += buf_size)
+    for (size_t offset = 0, buf_size = _8MiB; offset < file_size; offset += buf_size)
     {
         if (offset + buf_size > file_size)
             buf_size = file_size - offset;
         u_int8_t *buf = malloc(buf_size);
 
-        read_data_from_protocal(mode, buf, buf_size, curr_off + offset, ptr->file);
+        read_data_from_protocal(mode, buf, buf_size, curr_off + offset, ptr->file, NULL);
         fwrite(buf, buf_size, 1, new_file);
         free(buf);
     }

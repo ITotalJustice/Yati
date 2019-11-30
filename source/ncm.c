@@ -198,3 +198,19 @@ s64 ncm_get_storage_total_size(NcmStorageId storage_id)
     ncm_close_storage(&ncm_storage);
     return size;
 }
+
+u64 ncm_get_app_id_from_title_id(u64 title_id, NcmContentMetaType contentMetaType)
+{
+    switch (contentMetaType)
+    {
+        case NcmContentMetaType_Application:
+            return title_id;
+        case NcmContentMetaType_Patch:
+            return title_id ^ 0x800;
+        case NcmContentMetaType_AddOnContent:
+            return title_id ^ 0x1000;
+        default:
+            print_message_loop_lock("incorrect content meta type %u\n", contentMetaType);
+            return title_id;                              
+    }
+}

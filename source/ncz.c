@@ -18,7 +18,7 @@
 void ncz_get_header(ncz_structs_t *ptr)
 {
     memset(&ptr->header, 0, sizeof(ncz_header_t));
-    read_data_from_protocal(ptr->nca.mode, &ptr->header, sizeof(ncz_header_t), ptr->nca.offset, ptr->nca.nca_file);
+    read_data_from_protocal(ptr->nca.mode, &ptr->header, sizeof(ncz_header_t), ptr->nca.offset, ptr->nca.nca_file, NULL);
 }
 
 bool ncz_check_valid_magic(ncz_structs_t *ptr)
@@ -41,7 +41,7 @@ void ncz_populate_sizes_offsets(ncz_structs_t *ptr)
 void ncz_populate_sections(ncz_structs_t *ptr)
 {
     ptr->sections = malloc(ptr->ncz_section_size);
-    read_data_from_protocal(ptr->nca.mode, ptr->sections, ptr->ncz_section_size, ptr->ncz_section_offset, ptr->nca.nca_file);
+    read_data_from_protocal(ptr->nca.mode, ptr->sections, ptr->ncz_section_size, ptr->ncz_section_offset, ptr->nca.nca_file, NULL);
 }
 
 int ncz_get_section(ncz_structs_t *ptr, u64 offset)
@@ -88,7 +88,7 @@ void ncz_temp(ncz_structs_t *ptr)
 
         // alloc buffer then read data into buffer.
         void *buf_in = malloc(buf_size);
-        read_data_from_protocal(ptr->nca.mode, buf_in, buf_size, ptr->ncz_data_offset + offset, ptr->nca.nca_file);
+        read_data_from_protocal(ptr->nca.mode, buf_in, buf_size, ptr->ncz_data_offset + offset, ptr->nca.nca_file, NULL);
 
         // set up input struct.
         ZSTD_inBuffer input = { buf_in, buf_size, 0 };
@@ -142,7 +142,7 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
     ncz_structs_t ptr;
     ncz_first_0x4000 *data = malloc(sizeof(ncz_first_0x4000));
 
-    read_data_from_protocal(mode, data, NCZ_HEADER_OFFSET, offset, f);
+    read_data_from_protocal(mode, data, NCZ_HEADER_OFFSET, offset, f, NULL);
     nca_encrypt_decrypt_xts(data, data, 0, NCZ_HEADER_OFFSET, NCA_DECRYPT);
     data->header.distribution_type = 0; // for xci installs.
 

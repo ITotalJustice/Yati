@@ -236,7 +236,7 @@ bool ntwrk_quick_download(const char *url, size_t buf_size, const char *file_out
 void ntwrk_encode_url(const char *url, char *out_url)
 {
     char *temp_url = curl_easy_escape(curl, url, 0);
-    if (temp_url == NULL)
+    if (!temp_url)
     {
         print_message_loop_lock("failed to encode url\n");
         return;
@@ -251,7 +251,7 @@ void ntwrk_decode_url(const char *url, char *out_url)
 {
     int new_str_len = 0; 
     char *temp_url = curl_easy_unescape(curl, url, 0, &new_str_len);
-    if (temp_url == NULL)
+    if (!temp_url)
     {
         print_message_loop_lock("failed to decode url\n");
         return;
