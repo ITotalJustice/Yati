@@ -37,7 +37,7 @@ __**Misc**__
 * threaded installs (close to done).
 * write gui for usb.
 * nca verification.
-* option remove account dependency (useful for apps such as youtube which require a linked account). This can be easily done by parsing the control nca and chnage the bit at offset `0x3213` to 0.
+* option remove account dependency (useful for apps such as youtube which require a linked account). This can be easily done by parsing the control nca and changing the bit at offset `0x3213` to 0.
 * python script to split all file types, with a gui (very low priority).
 * gamecard direct install (install a game directly from the cart).
 * dump games to any format (ncas, nsp, xci, nsz, xsz).
