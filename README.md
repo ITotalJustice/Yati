@@ -1,6 +1,6 @@
-# Atmosphere-Updater
+# YATI (Yet Another Title Installer).
 
-YATI (Yet Another Title Installer).
+A work-in-progress title installer (soon to be title manager) for the Nintendo Switch!
 
 ----
 
