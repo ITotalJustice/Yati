@@ -82,6 +82,33 @@ typedef enum
 
 typedef struct
 {
+    u32 media_start_offset; 
+    u32 media_end_offset;
+    u32 _0x8;               // unkown.
+    u32 _0xC;               // unkown.
+} nca_section_table_entry_t;
+
+typedef struct
+{
+    u8 sha256[0x20];
+} nca_section_header_hash_t;
+typedef struct
+{
+    u16 version;            // always 2.
+    u8 file_system_type;    // see NcaFileSystemType.
+    u8 hash_type;           // see NcaHashType.
+    u8 encryption_type;     // see NcaEncryptionType.
+    u8 padding;
+    u8 fs_super_block[0xF8];
+} nca_section_header_t;
+
+typedef struct
+{
+    u8 area[0x10];
+} nca_key_area_t;
+
+typedef struct
+{
     u8 rsa_fixed_key[0x100];
     u8 rsa_npdm[0x100];
     u32 magic;
@@ -97,34 +124,24 @@ typedef struct
     u8 padding[0xF];
     FsRightsId rights_id;
 
-    u8 idk[0x40];
-    u8 idk2[0x80];
-    u8 key_area[0x40];
+    nca_section_table_entry_t section_table[0x4];
+    nca_section_header_hash_t section_header_hash[0x4];
+    nca_key_area_t key_area[0x4];
 } nca_header_t;
 
 typedef struct
 {
-    u16 version;            // always 2.
-    u8 file_system_type;    // see NcaFileSystemType.
-    u8 hash_type;           // see NcaHashType.
-    u8 encryption_type;     // see NcaEncryptionType.
-    u8 padding;
-    u8 fs_super_block[0xF8];
-} nca_section_header_t;
-
-typedef struct
-{
-    InstallProtocal mode;               // see InstallProtocal.
+    InstallProtocal mode;       // see InstallProtocal.
     ncm_install_struct_t ncm;
 
     FsFile *nca_file2;
-    FILE *nca_file;                     // only used if mode == SD_CARD_INSTALL.
-    size_t nca_size;                    // size of the nca.
-    u64 offset;                   // offset of the file.
+    FILE *nca_file;             // only used if mode == SD_CARD_INSTALL.
+    size_t nca_size;            // size of the nca.
+    u64 offset;                 // offset of the file.
 
-    u8 *data;                     // the data the nca is stoared into.
-    size_t data_stored;                 // size of data currently stored into mem.
-    size_t data_written;                // size of data written to placeholder.
+    u8 *data;                   // the data the nca is stoared into.
+    size_t data_stored;         // size of data currently stored into mem.
+    size_t data_written;        // size of data written to placeholder.
 } nca_struct_t;
 
 

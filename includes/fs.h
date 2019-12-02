@@ -1,13 +1,26 @@
-#ifndef _FS_H___
-#define _FS_H___
+#ifndef _FS_H_
+#define _FS_H_
 
 #include <switch.h>
 
-typedef enum
+
+typedef struct
 {
-    SD_CARD = 0,
-    USB_HDD = 1,
-} fs_protocal;
+    u8 version;                 // always 1.
+    u8 _0x01;                   // padding.
+    u64 permissions_bitmask;
+    u32 data_size;
+    u32 content_owner_id_section_size;
+
+} fs_access_header_t;
+
+typedef struct
+{
+    u8 version;                 // always 1.
+    u8 _0x01;                   // padding.
+    u64 permissions_bitmask;
+    u8 _0xC[0x20];
+} fs_access_control_t;
 
 
 /*
