@@ -37,7 +37,7 @@ __**Misc**__
 * "standard crypto" for ticketless installs.
 * option to delete application.
 * option to change current install location of installed application (i think theres an ipc func for it?).
-* option to dump titles.
+* option to games to any format (ncas, nsp, xci, nsz, xsz).
 * option to dump specific sections of nca (pfs0, header, romfs etc). would be useful for debugging and tools such as layeredFs.
 * ticket dumping.
 * installed app info when selected (play time, app size, save size, save owner(s), mkey, does require linked nnid etc).
@@ -51,7 +51,6 @@ __**Misc**__
 __Low Priority__
 * option to launch installed application.
 * option to list / load homebrew.
-* dump games to any format (ncas, nsp, xci, nsz, xsz).
 * usb hdd support for sx users.
 * gui for the app (will do this last).
 * write gui for usb.
