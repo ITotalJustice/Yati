@@ -23,7 +23,7 @@
 #include "util.h"
 
 
-bool ticket_get_tik_total(tik_struct_t *tik)
+bool ticket_get_tik_total(ticket_struct_t *tik)
 {
     if (!(tik->common_total = es_count_common_tik()) && !(tik->personalised_total = es_count_personailsed_tik()))
     {
@@ -34,7 +34,7 @@ bool ticket_get_tik_total(tik_struct_t *tik)
     return true;
 }
 
-bool ticket_read_common(tik_struct_t *tik)
+bool ticket_read_common(ticket_struct_t *tik)
 {
     FsRightsId *rights_id = malloc(tik->common_total * sizeof(FsRightsId));
     memset(rights_id, 0, tik->common_total * sizeof(FsRightsId));
@@ -66,7 +66,7 @@ bool ticket_read_common(tik_struct_t *tik)
     return true;
 }
 
-bool ticket_read_personalised(tik_struct_t *tik)
+bool ticket_read_personalised(ticket_struct_t *tik)
 {
     FsRightsId *rights_id = malloc(tik->personalised_total * sizeof(FsRightsId));
     memset(rights_id, 0, tik->personalised_total * sizeof(FsRightsId));
@@ -98,7 +98,7 @@ bool ticket_read_personalised(tik_struct_t *tik)
     return true;
 }
 
-bool ticket_setup_tik_info(tik_struct_t *tik)
+bool ticket_setup_tik_info(ticket_struct_t *tik)
 {
     if (tik->common_total)
         if (!ticket_read_common(tik))

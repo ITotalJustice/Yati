@@ -11,7 +11,7 @@
 #include "ticket.h"
 
 
-void ticket_menu_refresh_screen(tik_struct_t *tik, u32 cursor, u32 list_move)
+void ticket_menu_refresh_screen(ticket_struct_t *tik, u32 cursor, u32 list_move)
 {
     consoleClear();
 
@@ -32,11 +32,11 @@ void ticket_menu_refresh_screen(tik_struct_t *tik, u32 cursor, u32 list_move)
 
 int ticket_menu()
 {
-    tik_struct_t tik;
+    ticket_struct_t tik;
     if (!ticket_get_tik_total(&tik))
         return 1;
 
-    tik.info = malloc(tik.total * sizeof(tik_info_struct_t));
+    tik.info = malloc(tik.total * sizeof(ticket_info_struct_t));
     memset(tik.info, 0, tik.total);
 
     if (!ticket_setup_tik_info(&tik))
