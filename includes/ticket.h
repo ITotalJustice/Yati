@@ -6,15 +6,15 @@
 
 typedef enum
 {
-    common_ticket = 0,
-    personalised_ticket = 1
-} tik_type;
+    TicketType_Common = 0,
+    TicketType_Personalised = 1
+} TicketType;
 
 typedef struct
 {
     char name[0x200];
     FsRightsId rights_id;   // maybe use ncmrights and then fetch key gen...
-    tik_type type;          // see `tik_type`
+    TicketType type;        // see TicketType
 } tik_info_struct_t;
 
 typedef struct
@@ -38,5 +38,8 @@ bool ticket_read_personalised(tik_struct_t *tik);
 
 //
 bool ticket_setup_tik_info(tik_struct_t *tik);
+
+// delete ticket.
+Result ticket_delete(const FsRightsId *rights_id, TicketType type);
 
 #endif

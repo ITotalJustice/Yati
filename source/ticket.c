@@ -58,7 +58,7 @@ bool ticket_read_common(tik_struct_t *tik)
             snprintf(tik->info[i].name, 0x200, "%s", lang_entry->name);
         
         memcpy(&tik->info[i].rights_id, &rights_id[i], sizeof(FsRightsId));
-        tik->info[i].type = common_ticket;
+        tik->info[i].type = TicketType_Common;
     }
     
     // we are done with this now...
@@ -90,7 +90,7 @@ bool ticket_read_personalised(tik_struct_t *tik)
             snprintf(tik->info[i].name, 0x200, "%s", lang_entry->name);
         
         memcpy(&tik->info[i].rights_id, &rights_id[i], sizeof(FsRightsId));
-        tik->info[i].type = personalised_ticket;
+        tik->info[i].type = TicketType_Personalised;
     }
     
     // we are done with this now...
@@ -109,4 +109,20 @@ bool ticket_setup_tik_info(tik_struct_t *tik)
             return false;
 
     return true;
-} 
+}
+
+Result ticket_delete(const FsRightsId *rights_id, TicketType type)
+{
+    switch (type)
+    {
+        case (TicketType_Common):
+            return es_delete_common_tik(rights_id);
+
+        case (TicketType_Personalised):
+            return es_delete_personalised_tik(rights_id);
+
+        default:
+            print_message_loop_lock("unkown TicketType\n");
+            return 1;
+    }
+}

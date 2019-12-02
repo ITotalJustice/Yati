@@ -7,7 +7,7 @@
 
 // global services.
 static Service g_ns_service;
-static Service g_test_service;
+static Service fs_application_manager_inferface;
 static int service_state = 0;
 
 
@@ -140,12 +140,11 @@ void mm6()
 
 
 
-// from ogfoil, slightly modified.
 Result ns_start_services()
 {
     Result rc = 0;
 
-    if (serviceIsActive(&g_ns_service) || serviceIsActive(&g_test_service))
+    if (serviceIsActive(&g_ns_service) || serviceIsActive(&fs_application_manager_inferface))
         return rc;
 
     service_state = 1;
@@ -156,7 +155,7 @@ Result ns_start_services()
         return rc;
     }
 
-    if (R_FAILED(rc = serviceDispatch(&g_ns_service, 7996, .out_num_objects = 1, .out_objects = &g_test_service)))
+    if (R_FAILED(rc = serviceDispatch(&g_ns_service, 7996, .out_num_objects = 1, .out_objects = &fs_application_manager_inferface)))
     {
         print_message_loop_lock("failed to dispatch a service\n");
         ns_close_services();
@@ -169,7 +168,7 @@ void ns_close_services()
 {
     if (!service_state)
         return;
-    serviceClose(&g_test_service);
+    serviceClose(&fs_application_manager_inferface);
     serviceClose(&g_ns_service);
 }
 
@@ -182,7 +181,7 @@ Result ns_push_application_record(u64 app_id, void *cnmt_storage_records, size_t
         u64 app_id;
     } in = { 0x3, {0}, app_id };
     
-    Result rc =  serviceDispatchIn(&g_test_service, 16, in,
+    Result rc =  serviceDispatchIn(&fs_application_manager_inferface, 16, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { cnmt_storage_records, data_size } });
 
@@ -193,7 +192,7 @@ Result ns_push_application_record(u64 app_id, void *cnmt_storage_records, size_t
 
 Result ns_delete_application_record(u64 app_id)
 {
-    Result rc = serviceDispatchIn(&g_test_service, 27, app_id, SfOutHandleAttr_None);
+    Result rc = serviceDispatchIn(&fs_application_manager_inferface, 27, app_id, SfOutHandleAttr_None);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to delete application record\n");
     return rc;
@@ -202,7 +201,7 @@ Result ns_delete_application_record(u64 app_id)
 u32 ns_count_application_content_meta(u64 app_id)
 {
     u32 count = 0;
-    Result rc = serviceDispatchInOut(&g_test_service, 600, app_id, count, SfOutHandleAttr_None);
+    Result rc = serviceDispatchInOut(&fs_application_manager_inferface, 600, app_id, count, SfOutHandleAttr_None);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to count app cnmt\n");
     return count;
@@ -217,7 +216,7 @@ Result ns_list_application_record_content_meta(u64 offset, u64 app_id, void *out
     } in = { offset, app_id };
     u32 out = 0;
 
-    Result rc = serviceDispatchInOut(&g_test_service, 17, in, out,
+    Result rc = serviceDispatchInOut(&fs_application_manager_inferface, 17, in, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_buf, out_buf_size } });
 
@@ -225,5 +224,18 @@ Result ns_list_application_record_content_meta(u64 offset, u64 app_id, void *out
         print_message_loop_lock("failed to list app cnmt\n");
     if (count != out)
         print_message_loop_lock("count difference\n");
+    return rc;
+}
+
+
+/*
+*   IPC functions
+*/
+
+Result ns_delete_application(u64 app_id) // DeleteApplicationCompletely
+{
+    Result rc = serviceDispatchIn(&fs_application_manager_inferface, 5, app_id, SfOutHandleAttr_None);
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to delete application record\n");
     return rc;
 }

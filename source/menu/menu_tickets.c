@@ -73,7 +73,7 @@ int ticket_menu()
 
         if (kDown & KEY_X)
         {
-            es_delete_tik(&tik.info[cursor].rights_id);
+            ticket_delete(&tik.info[cursor].rights_id, tik.info[cursor].type);
         }
 
         if (kDown &KEY_B || kDown &KEY_PLUS)

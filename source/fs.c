@@ -441,3 +441,9 @@ u64 fs_get_key_gen_from_rights_id(FsRightsId rights_id)
 {
     return __bswap64(*(u64 *)(rights_id.c + 0x8));
 }
+
+
+/*
+*   IPC functions
+*/
+

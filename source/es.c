@@ -18,7 +18,7 @@ Result es_start_service()
 
     rc = smGetService(&g_es_service, "es");
     if (R_FAILED(rc))
-        printf("failed to start es service\n");
+        print_message_loop_lock("failed to start es service\n");
     return rc;
 }
 
@@ -37,19 +37,46 @@ Result es_import_tik_and_cert(void const *tik_buf, size_t tik_size, void const *
     return rc;
 }
 
-Result es_delete_tik(const FsRightsId *rights_id)
+Result es_delete_common_tik(const FsRightsId *rights_id)
 {
-    Result rc = serviceDispatch(&g_es_service, 3,
+    Result rc = serviceDispatch(
+        &g_es_service, 3,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { rights_id, sizeof(FsRightsId) } });
     if (R_FAILED(rc))
-        print_message_loop_lock("failed to delete tik\n");
+        print_message_loop_lock("failed to delete common tik\n");
     return rc;
+}
+
+Result es_delete_personalised_tik(const FsRightsId *rights_id)
+{
+    Result rc = serviceDispatch(&g_es_service, 4,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { rights_id, sizeof(FsRightsId) } });
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to delete personalised tik\n");
+    return rc;
+}
+
+Result es_delete_all_common_tik(void)
+{
+    Result rc = serviceDispatch(&g_es_service, 5, SfOutHandleAttr_None, SfOutHandleAttr_None);
+}
+
+Result es_delete_all_personalised_tik(void)
+{
+    Result rc = serviceDispatch(&g_es_service, 6, SfOutHandleAttr_None, SfOutHandleAttr_None);
+}
+
+Result es_delete_all_personalised_tik_ex()
+{
+    Result rc = serviceDispatch(&g_es_service, 7, SfOutHandleAttr_None, SfOutHandleAttr_None);
 }
 
 u32 es_count_common_tik(void)
 {
     u32 out_total = 0;
+
     Result rc = serviceDispatchOut(&g_es_service, 9, out_total, SfOutHandleAttr_None);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to count common tickets\n");
@@ -59,6 +86,7 @@ u32 es_count_common_tik(void)
 u32 es_count_personailsed_tik(void)
 {
     u32 out_total = 0;
+
     Result rc = serviceDispatchOut(&g_es_service, 10, out_total, SfOutHandleAttr_None);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to count personalized tickets\n");
@@ -69,6 +97,7 @@ Result es_list_common_tik(FsRightsId *out, u32 count)
 {
     u32 out_total = 0;
     u64 buffer_idk = 0;
+
     Result rc = serviceDispatchInOut(&g_es_service, 11, buffer_idk, out_total,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out, count * sizeof(FsRightsId) } });
@@ -84,6 +113,7 @@ Result es_list_personalised_tik(FsRightsId *out, u32 count)
 {
     u32 out_total = 0;
     u64 buffer_idk = 0;
+
     Result rc = serviceDispatchInOut(&g_es_service, 12, buffer_idk, out_total,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out, count * sizeof(FsRightsId) } });
@@ -95,9 +125,24 @@ Result es_list_personalised_tik(FsRightsId *out, u32 count)
     return rc;
 }
 
+u32 es_get_common_tik_size(const FsRightsId *rights_id)
+{
+    u32 out_size = 0;
+    u64 buffer_idk = 0;
+
+    Result rc = serviceDispatchInOut(&g_es_service, 14, buffer_idk, out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { rights_id, sizeof(FsRightsId) } });
+
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to get common tik size\n");
+    return out_size;
+}
+
 Result es_get_common_tik_data(void *out, size_t out_size, const FsRightsId *rights_id)
 {
     u64 buffer_idk = 0;
+
     Result rc = serviceDispatchInOut(&g_es_service, 16, rights_id, buffer_idk,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out, out_size } });

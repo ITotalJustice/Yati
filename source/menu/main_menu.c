@@ -116,10 +116,12 @@ void menu_main()
                 case TICKET:
                 {
                     ticket_menu();
+                    break;
                 }
                 case SIGS:
                 {
                     sigpatch_menu();
+                    break;
                 }
             }
             print_main_menu(main_menu_option, main_menu_cursor, main_menu_cursor_max);
