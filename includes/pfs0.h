@@ -8,6 +8,8 @@
 
 #include "util.h"
 
+#define PFS0_MAGIC 0x30534650
+
 
 typedef struct
 {

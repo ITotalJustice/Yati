@@ -26,12 +26,12 @@
 
 void *ticket_decrypt_title_key(const void *title_key, void *out, size_t size)
 {
-    return crypto_encrypt_decrypt_ctr_cbc(title_key, out, NULL, size, NULL, EncryptMode_Decrypt);
+    return crypto_encrypt_decrypt_aes_cbc(title_key, out, NULL, size, NULL, EncryptMode_Decrypt);
 }
 
 void *ticket_encrypt_title_key(const void *title_key, void *out, size_t size)
 {
-    return crypto_encrypt_decrypt_ctr_cbc(title_key, out, NULL, size, NULL, EncryptMode_Encrypt);
+    return crypto_encrypt_decrypt_aes_cbc(title_key, out, NULL, size, NULL, EncryptMode_Encrypt);
 }
 
 bool ticket_get_tik_total(ticket_struct_t *tik)

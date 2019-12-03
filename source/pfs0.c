@@ -8,9 +8,6 @@
 #include "util.h"
 
 
-#define PFS0_MAGIC 0x30534650
-
-
 void pfs0_get_header(pfs0_struct_ptr *ptr, InstallProtocal mode)
 {
     memset(&ptr->header, 0, sizeof(pfs0_header_t));

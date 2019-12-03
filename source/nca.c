@@ -99,20 +99,27 @@ Result nca_setup_placeholder(ncm_install_struct_t *ncm, const char *name, size_t
     return rc;
 }
 
-Result nca_get_header_decrypted(nca_header_t *header, u64 offset, InstallProtocal mode, FILE *f, FsFile *f2)
+void nca_encrypt_header(nca_header_t *header)
 {
-    Result rc = 0;
+    crypto_encrypt_decrypt_aes_xts(&header, &header, NULL, NULL, 0, NCA_SECTOR_SIZE, NCA_HEADER_SIZE, EncryptMode_Encrypt);
+}
 
-    // get the header.
-    read_data_from_protocal(mode, header, NCA_HEADER_SIZE, offset, f, f2);
-
+void nca_decrypt_header(nca_header_t *header)
+{
     // decrypt it.
-    crypto_encrypt_decrypt_xts(header, header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Decrypt);
+    crypto_encrypt_decrypt_aes_xts(header, header, NULL, NULL, 0, NCA_SECTOR_SIZE, NCA_HEADER_SIZE, EncryptMode_Decrypt);
 
     // set distrubution type to 
     nca_set_distribution_type_to_system(header);
+}
 
-    return rc;
+void nca_get_header_decrypted(nca_header_t *header, u64 offset, InstallProtocal mode, FILE *f, FsFile *f2)
+{
+    // get the header.
+    read_data_from_protocal(mode, header, NCA_HEADER_SIZE, offset, f, f2);
+
+    // now lets decrypt it.
+    nca_decrypt_header(header);
 }
 
 Result nca_start_install(const char *name, u64 offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2)
@@ -121,17 +128,13 @@ Result nca_start_install(const char *name, u64 offset, NcmStorageId storage_id, 
     nca_struct_t nca_struct;
     nca_header_t header;
 
-    rc = nca_get_header_decrypted(&header, offset, mode, f, f2);
-    if (R_FAILED(rc))
-        return rc;
+    nca_get_header_decrypted(&header, offset, mode, f, f2);
 
     // fill in the needed data to be passed around.
     nca_struct.nca_file     = f;
     nca_struct.nca_file2    = f2;
     nca_struct.mode         = mode;
     nca_struct.storage_id   = storage_id;
-    //nca_struct.size_from_container = 0;
-    nca_struct.size_from_header = header.nca_size - NCA_HEADER_SIZE;
     nca_struct.nca_size     = header.nca_size - NCA_HEADER_SIZE;
     nca_struct.offset       = offset + NCA_HEADER_SIZE;
     nca_struct.data_written = 0;
@@ -144,7 +147,7 @@ Result nca_start_install(const char *name, u64 offset, NcmStorageId storage_id, 
     }
 
     // now that we have the nca size, we can setup the placeholder and write the header to it
-    crypto_encrypt_decrypt_xts(&header, &header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Encrypt);
+    nca_encrypt_header(&header);
     ncm_write_placeholder(&nca_struct.ncm.storage, &nca_struct.ncm.placeholder_id, &nca_struct.data_written, &header, NCA_HEADER_SIZE);
 
     // start nca install.
@@ -194,15 +197,4 @@ bool nca_prepare_single_install(const char *file_name, NcmStorageId storage_id)
 
     free(cnmt_struct.cnmt_infos);
     return true;
-}
-
-
-/*
-*   nac install rewrite.
-*/
-
-
-void nca_setup_install()
-{
-
 }

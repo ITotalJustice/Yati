@@ -6,9 +6,16 @@
 #include "util.h"
 #include "ncm.h"
 
+// for xts dec / enc.
+#define NCA_SECTOR_SIZE         0x200
+// should be 0x400, will change soon.
+#define NCA_HEADER_SIZE         0x330
+// section of the nca that is encrypted with aes_xts. the first 0x400 make up the nca header, the other 0x800 is the section header block * 4.
+#define NCA_XTS_SECTION_SIZE    0xC00
 
-#define NCA_SECTOR_SIZE 0x200
-#define NCA_HEADER_SIZE 0x330
+#define NCA0_MAGIC 0x3041434E
+#define NCA2_MAGIC 0x3241434E
+#define NCA3_MAGIC 0x3341434E
 
 
 typedef enum
@@ -112,12 +119,17 @@ typedef struct
     u32 context_id;
     u32 sdk_version;
     NcaKeyGeneration key_gen;                         // see NcaKeyGeneration.
-    u8 padding[0xF];
+    u8 _0x221[0xF];     // empty.
     FsRightsId rights_id;
 
     nca_section_table_entry_t section_table[0x4];
     nca_section_header_hash_t section_header_hash[0x4];
     nca_key_area_t key_area[0x4];
+
+    // this is correct size of the nca header.
+    // will change this later once ncz / nca is re written so that the nca is always passed through nca.c
+    // after being decompressed in ncz.c
+    //u8 _0x340[0xB0];    // empty.
 } nca_header_t;
 
 typedef struct
@@ -148,8 +160,6 @@ typedef struct
     FsFile *nca_file2;
     FILE *nca_file;                 // only used if mode == SD_CARD_INSTALL.
 
-    size_t size_from_header;    // size of the nca from the nca header.
-    //size_t size_from_container; // size of the nca from the pfs0 / hfs0.
     size_t nca_size;
     u64 offset;                     // offset of the file.
 
@@ -169,8 +179,15 @@ const char *nca_get_string_from_id(const NcmContentId nca_id, char *nca_string_o
 // return the nca_id from the string.
 NcmContentId nca_get_id_from_string(const char *nca_string);
 
-// get the header of the nca, returns the size read.
-void *nca_get_header(nca_struct_t *nca_struct);
+// encrypts the header.
+void nca_encrypt_header(nca_header_t *header);
+
+// decrypts the header.
+void nca_decrypt_header(nca_header_t *header);
+
+// reads NCA_HEADER_SIZE
+// calls nca_decrypt_header.
+void nca_get_header_decrypted(nca_header_t *header, u64 offset, InstallProtocal mode, FILE *f, FsFile *f2);
 
 //
 Result nca_register_placeholder(ncm_install_struct_t *ncm);

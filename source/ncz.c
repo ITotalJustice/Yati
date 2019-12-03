@@ -67,7 +67,7 @@ void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, u64 writ
             chunk = total_size - written_offset;
 
         if (ptr->sections[loc].crypto_type == 3)
-            crypto_encrypt_ctr(&buf[buf_start_offset], &buf[buf_start_offset], ptr->sections[loc].crypto_key, ptr->sections[loc].crypto_counter, chunk, written_offset);
+            crypto_encrypt_aes_ctr(&buf[buf_start_offset], &buf[buf_start_offset], ptr->sections[loc].crypto_key, ptr->sections[loc].crypto_counter, chunk, written_offset);
         
         written_offset += chunk;
         buf_start_offset += chunk;
@@ -145,8 +145,7 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
     ncz_first_0x4000 *data = malloc(sizeof(ncz_first_0x4000));
 
     read_data_from_protocal(mode, data, NCZ_HEADER_OFFSET, offset, f, NULL);
-    crypto_encrypt_decrypt_xts(&data->header, &data->header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Decrypt);
-    nca_set_distribution_type_to_system(&data->header);
+    nca_decrypt_header(&data->header);
 
     ptr.nca.nca_file        = f;
     ptr.nca.mode            = mode;
@@ -156,7 +155,7 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
 
     // now that we have the nca size, we can setup the placeholder and write the header to it
     nca_setup_placeholder(&ptr.nca.ncm, name, data->header.nca_size, storage_id);
-    crypto_encrypt_decrypt_xts(&data->header, &data->header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Encrypt);
+    nca_encrypt_header(&data->header);
     ncm_write_placeholder(&ptr.nca.ncm.storage, &ptr.nca.ncm.placeholder_id, &ptr.nca.data_written, data, NCZ_HEADER_OFFSET);
     free(data);
 
