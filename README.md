@@ -25,6 +25,7 @@ __**Misc**__
 
 * auto ignores fw version.
 * split installs for all of the above (nca, nsp, xci, nsz, xsz).
+* ticket browser + option to delete selected tickets (will be more feature complete soon).
 * installs latest sig patches for either hekate / fusee primary users.
 
 ----
@@ -33,17 +34,27 @@ __**Misc**__
 
 * remove hard coded header_key_source key (will do this first).
 * re-write most of the code.
+* "standard crypto" for ticketless installs.
+* option to delete application.
+* option to change current install location of installed application (i think theres an ipc func for it?).
+* option to games to any format (ncas, nsp, xci, nsz, xsz).
+* option to dump specific sections of nca (pfs0, header, romfs etc). would be useful for debugging and tools such as layeredFs.
+* ticket dumping.
+* installed app info when selected (play time, app size, save size, save owner(s), mkey, does require linked nnid etc).
 * http / https browsing support.
 * cloud install support.
 * threaded installs (close to done).
-* write gui for usb.
 * nca verification.
 * option remove account dependency (useful for apps such as youtube which require a linked account). This can be easily done by parsing the control nca and changing the bit at offset `0x3213` to 0.
-* python script to split all file types, with a gui (very low priority).
 * ~~gamecard direct install (install a game directly from the cart).~~ added!
-* dump games to any format (ncas, nsp, xci, nsz, xsz).
+
+__Low Priority__
+* option to launch installed application.
+* option to list / load homebrew.
 * usb hdd support for sx users.
 * gui for the app (will do this last).
+* write gui for usb.
+* python script to split all file types, with a gui (very low priority).
 
 ----
 
