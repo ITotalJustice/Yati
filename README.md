@@ -58,6 +58,15 @@ __Low Priority__
 
 ----
 
+# Credits
+
+* Massive thank you for the fantastic documentation over on [switchbrew] (https://switchbrew.org/wiki/Main_Page).
+* Everyone that has contributed to [libnx] (https://github.com/switchbrew/libnx).
+* [Devkitpro] (https://devkitpro.org/) for the fantastic toolchain.
+* [Tinfoil] (https://github.com/Adubbz/Tinfoil) for the functions `nca_get_string_from_id` and `nca_get_id_from_string` as well as being a great refrence for cnmt parsing.
+
+----
+
 # Patreon
 
 Feel free to support me on patreon, I would really appreciate it!
