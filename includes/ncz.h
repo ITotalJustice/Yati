@@ -38,7 +38,7 @@ typedef struct
 typedef struct
 {
     nca_header_t header;
-    u8 encrypted[0x3C04];
+    u8 encrypted[0x3CC0];
 } ncz_first_0x4000;
 
 typedef struct

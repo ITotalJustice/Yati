@@ -5,12 +5,6 @@
 #include "util.h"
 
 
-// global services.
-static Service g_ns_service;
-static Service fs_application_manager_inferface;
-static int service_state = 0;
-
-
 size_t ns_get_sd_storage_total_size()
 {
     size_t size = 0;
@@ -108,68 +102,45 @@ s32 ns_list_content_meta_key(NcmContentMetaKey *meta, NsApplicationDeliveryInfo 
     return total_out;
 }
 
-/*void mm()
+u32 ns_count_application_record(u64 app_id) // always returns 4 if app exists... is that the number of ncas?
 {
-    nsNeedsSystemUpdateToDeliverApplication();
+    u32 count = 0;
+    Result rc = serviceDispatchInOut(nsGetServiceSession_ApplicationManagerInterface(), 1, app_id, count, SfOutHandleAttr_None);
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to count application records\n");
+    return count;
 }
 
-void mm2()
+Result ns_delete_application_entity(u64 app_id)
 {
-    nsEstimateRequiredSize();
-}
-
-void mm3()
-{
-    nsRequestReceiveApplication();
-}
-
-void mm4()
-{
-    nsCommitReceiveApplication();
-}
-
-void mm5()
-{
-    nsGetReceiveApplicationProgress();
-}
-
-void mm6()
-{
-    nsListNotCommittedContentMeta();
-}*/
-
-
-
-Result ns_start_services()
-{
-    Result rc = 0;
-
-    if (serviceIsActive(&g_ns_service) || serviceIsActive(&fs_application_manager_inferface))
-        return rc;
-
-    service_state = 1;
-
-    if (R_FAILED(rc = smGetService(&g_ns_service, "ns:am2")))
-    {
-        print_message_loop_lock("failed to start ns:am2 service\n");
-        return rc;
-    }
-
-    if (R_FAILED(rc = serviceDispatch(&g_ns_service, 7996, .out_num_objects = 1, .out_objects = &fs_application_manager_inferface)))
-    {
-        print_message_loop_lock("failed to dispatch a service\n");
-        ns_close_services();
-    }
-        
+    Result rc = serviceDispatchIn(nsGetServiceSession_ApplicationManagerInterface(), 4, app_id, SfOutHandleAttr_None);
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to delete application entity\n");
     return rc;
 }
 
-void ns_close_services()
+Result ns_delete_application_completely(u64 app_id) // always fails, even though it does delete the application......
 {
-    if (!service_state)
-        return;
-    serviceClose(&fs_application_manager_inferface);
-    serviceClose(&g_ns_service);
+    Result rc = serviceDispatchIn(nsGetServiceSession_ApplicationManagerInterface(), 5, app_id, SfOutHandleAttr_None);
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to delete application completely\n");
+    return rc;
+}
+
+bool ns_is_application_moveable(u64 app_id)
+{
+    bool can_move = false;
+    //8
+    return can_move;
+}
+
+size_t ns_get_application_occupied_size(u64 app_id)
+{
+    size_t size = 0;
+    Result rc = serviceDispatchInOut(nsGetServiceSession_ApplicationManagerInterface(), 11, app_id, size, SfOutHandleAttr_None);
+    if (R_FAILED(rc))
+        printf("failed to delete application record\n");
+    return size;
 }
 
 Result ns_push_application_record(u64 app_id, void *cnmt_storage_records, size_t data_size)
@@ -181,30 +152,13 @@ Result ns_push_application_record(u64 app_id, void *cnmt_storage_records, size_t
         u64 app_id;
     } in = { 0x3, {0}, app_id };
     
-    Result rc =  serviceDispatchIn(&fs_application_manager_inferface, 16, in,
+    Result rc =  serviceDispatchIn(nsGetServiceSession_ApplicationManagerInterface(), 16, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { cnmt_storage_records, data_size } });
 
     if (R_FAILED(rc))
         print_message_loop_lock("failed to push application record\n");
     return rc;
-}
-
-Result ns_delete_application_record(u64 app_id)
-{
-    Result rc = serviceDispatchIn(&fs_application_manager_inferface, 27, app_id, SfOutHandleAttr_None);
-    if (R_FAILED(rc))
-        print_message_loop_lock("failed to delete application record\n");
-    return rc;
-}
-
-u32 ns_count_application_content_meta(u64 app_id)
-{
-    u32 count = 0;
-    Result rc = serviceDispatchInOut(&fs_application_manager_inferface, 600, app_id, count, SfOutHandleAttr_None);
-    if (R_FAILED(rc))
-        print_message_loop_lock("failed to count app cnmt\n");
-    return count;
 }
 
 Result ns_list_application_record_content_meta(u64 offset, u64 app_id, void *out_buf, size_t out_buf_size, u32 count)
@@ -216,7 +170,7 @@ Result ns_list_application_record_content_meta(u64 offset, u64 app_id, void *out
     } in = { offset, app_id };
     u32 out = 0;
 
-    Result rc = serviceDispatchInOut(&fs_application_manager_inferface, 17, in, out,
+    Result rc = serviceDispatchInOut(nsGetServiceSession_ApplicationManagerInterface(), 17, in, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_buf, out_buf_size } });
 
@@ -227,15 +181,26 @@ Result ns_list_application_record_content_meta(u64 offset, u64 app_id, void *out
     return rc;
 }
 
-
-/*
-*   IPC functions
-*/
-
-Result ns_delete_application(u64 app_id) // DeleteApplicationCompletely
+Result ns_delete_application_record(u64 app_id)
 {
-    Result rc = serviceDispatchIn(&fs_application_manager_inferface, 5, app_id, SfOutHandleAttr_None);
+    Result rc = serviceDispatchIn(nsGetServiceSession_ApplicationManagerInterface(), 27, app_id, SfOutHandleAttr_None);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to delete application record\n");
     return rc;
+}
+
+u32 ns_count_application_content_meta(u64 app_id) // need a function to check if it has at least 1 content meta, currently will fail if non exists.
+{
+    u32 count = 0;
+    Result rc = serviceDispatchInOut(nsGetServiceSession_ApplicationManagerInterface(), 600, app_id, count, SfOutHandleAttr_None);
+    if (R_FAILED(rc))
+        printf("failed to count app cnmt\n");
+    return count;
+}
+
+bool ns_has_application_record(u64 app_id) //5.0.0
+{
+    bool has_record = false;
+    //910
+    return has_record;
 }

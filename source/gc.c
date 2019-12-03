@@ -57,15 +57,28 @@ Result gc_setup_mount(gc_struct_t *gc_struct, FsGameCardPartition partition)
     return rc;
 }
 
-Result gc_mount_partition(FsGameCardHandle *handle, FsGameCardPartition partition, FsFileSystem *out)
+Result gc_mount_system_partition(gc_struct_t *gc, FsGameCardPartition partition)
 {
-    switch (partition)
+    Result rc = 0;
+    rc = fs_open_device_operator(&gc->d_op);
+    if (R_FAILED(rc))
+        return rc;
+    
+    rc = fs_get_game_card_handle(&gc->d_op, &gc->gc_handle);
+    if (R_FAILED(rc))
     {
-        case FsGameCardPartition_Update:    return fs_open_game_card(handle, partition, out);
-        case FsGameCardPartition_Normal:    return fs_open_game_card(handle, partition, out);
-        case FsGameCardPartition_Secure:    return fs_open_game_card(handle, partition, out);
-        case FsGameCardPartition_Logo:      return fs_open_game_card(handle, partition, out);
+        fs_close_device_operator(&gc->d_op);
+        return rc;
     }
+
+    rc = fs_open_game_card(&gc->gc_handle, partition, &gc->gc_system);
+    if (R_FAILED(rc))
+    {
+        fs_close_device_operator(&gc->d_op);
+        return rc;
+    }
+
+    return rc;
 }
 
 Result gc_dump_update()
@@ -76,12 +89,19 @@ Result gc_dump_update()
 
 Result gc_dump_normal()
 {
-    FsDeviceOperator d_op;
-    memset(&d_op, 0, sizeof(FsDeviceOperator));
+
 }
 
-Result gc_dump_secure()
+Result gc_dump_secure(void)
 {
-    FsDeviceOperator d_op;
-    memset(&d_op, 0, sizeof(FsDeviceOperator));
+    Result rc = 0;
+    gc_struct_t gc;
+    rc = gc_mount_system_partition(&gc, FsGameCardPartition_Secure);
+
+    // get name of game from gc.
+    // create dir with title name.
+
+    // for now, just create dump folder and write ncas to that folder.
+    
+    return rc;
 }

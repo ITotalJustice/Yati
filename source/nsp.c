@@ -110,6 +110,8 @@ void nsp_setup_install(const char *file_name, NcmStorageId storage_id, InstallPr
     ptr.raw_data_size = pfs0_get_total_raw_data_size(&ptr);
 
     // check if we have enough space for the selected game.
+    // wont really work for ncz sadly because it'll be compressed size.
+    // why doesnt the pfs0 have a u64 for total size fml.
     // if not, cleanup and exit.
 
     // now that we've filled out the tables, we can start installing!

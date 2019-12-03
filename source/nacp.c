@@ -46,6 +46,5 @@ void nacp_zero_nnid_required_bit(NacpStruct *nacp)
 {
     // check against database to see if game should be set to zero.
     // return error codes based on response.
-    // have this function callable by the user
     nacp->requiredNetworkServiceLicenseOnLaunch = 0;
 }

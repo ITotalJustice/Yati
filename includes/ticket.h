@@ -24,7 +24,8 @@ typedef struct
     FsRightsId rights_id;
     u32 account_id;
     u8 _0x174[0xC];             //unkown.
-    u8 _0x180[0x140];           //unkown.
+    u8 title_key_enc[0x10];
+    u8 _0x190[0x130];           //unkown.
 } ticket_data_t;
 
 typedef struct

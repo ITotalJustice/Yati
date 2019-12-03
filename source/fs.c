@@ -7,6 +7,10 @@
 #include "util.h"
 
 
+// globals
+Service g_fs_device_operator_service;
+
+
 /*
 *   FS FILE
 */
@@ -198,35 +202,43 @@ void fs_close_dir(FsDir *dir)
 *   FS SYSTEM
 */
 
-Result fs_open_system(FsFileSystem *system, FsFileSystemType fs_type, const char *path, ...)
+Result fs_open_system(FsFileSystem *out, FsFileSystemType fs_type, const char *path, ...)
 {
-    Result rc = fsOpenFileSystem(system, fs_type, path);
+    Result rc = fsOpenFileSystem(out, fs_type, path);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to open file system %s\n", path);
     return rc;
 }
 
-Result fs_open_system_with_ID(FsFileSystem *system, u64 title_ID, FsFileSystemType fs_type, const char *path)
+Result fs_open_system_with_ID(FsFileSystem *out, u64 title_ID, FsFileSystemType fs_type, const char *path)
 {
-    Result rc = fsOpenFileSystemWithId(system, title_ID, fs_type, path);
+    Result rc = fsOpenFileSystemWithId(out, title_ID, fs_type, path);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to open file system with ID %s\n", path);
     return rc;
 }
 
-Result fs_open_system_with_patch(FsFileSystem *system, u64 title_ID, FsFileSystemType fs_type)
+Result fs_open_system_with_patch(FsFileSystem *out, u64 title_ID, FsFileSystemType fs_type)
 {
-    Result rc = fsOpenFileSystemWithPatch(system, title_ID, fs_type);
+    Result rc = fsOpenFileSystemWithPatch(out, title_ID, fs_type);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to open file system with patch %ld\n", title_ID);
     return rc;
 }
 
-Result fs_mount_sd_card(FsFileSystem *system)
+Result fs_mount_sd_card(FsFileSystem *out)
 {
-    Result rc = fsOpenSdCardFileSystem(system);
+    Result rc = fsOpenSdCardFileSystem(out);
     if (R_FAILED(rc))
         print_message_loop_lock("failed to open sd card\n");
+    return rc;
+}
+
+Result fs_open_game_card(const FsGameCardHandle *handle, FsGameCardPartition partition, FsFileSystem *out)
+{
+    Result rc = fsOpenGameCardFileSystem(out, handle, partition);
+    if (R_FAILED(rc))
+        print_message_loop_lock("failed to open gamecard...\n");
     return rc;
 }
 
@@ -340,17 +352,9 @@ Result fs_get_game_card_handle(FsDeviceOperator *d, FsGameCardHandle *out)
     return rc;
 }
 
-Result fs_open_game_card(const FsGameCardHandle *handle, FsGameCardPartition partition, FsFileSystem *out)
+u8 fs_get_game_card_attribute(FsDeviceOperator *d, const FsGameCardHandle *handle)
 {
-    Result rc = fsOpenGameCardFileSystem(out, handle, partition);
-    if (R_FAILED(rc))
-        print_message_loop_lock("failed to open gamecard...\n");
-    return rc;
-}
-
-u_int8_t fs_get_game_card_attribute(FsDeviceOperator *d, const FsGameCardHandle *handle)
-{
-    u_int8_t att = 0;
+    u8 att = 0;
     if (R_FAILED(fsDeviceOperatorGetGameCardAttribute(d, handle, &att)))
         print_message_loop_lock("failed to get game card attribute...\n");
     return att;
@@ -447,3 +451,49 @@ u64 fs_get_key_gen_from_rights_id(FsRightsId rights_id)
 *   IPC functions
 */
 
+
+Result fs_open_game_card_storage(const FsGameCardHandle *handle, FsStorage *out, FsGameCardPartition partition)
+{
+    /*
+    const struct {
+        FsGameCardHandle handle;
+        FsGameCardPartition partition;
+    } in = { *handle, partition };
+
+    result rc = serviceDispatchInOut(fsGetServiceSession(), 30, in, out);
+    return _fsObjectDispatchIn(&g_fsSrv, 30, in,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+    */
+}
+
+Result fs_get_game_card_update_partition_info(FsDeviceOperator *d, const FsGameCardHandle *handle)
+{
+
+}
+
+Result fs_get_game_card_certificate(FsDeviceOperator *d, const FsGameCardHandle *handle)
+{
+
+}
+
+Result fs_get_game_card_asic_info(FsDeviceOperator *d, const FsGameCardHandle *handle)
+{
+
+}
+
+Result fs_get_game_card_id_set(FsDeviceOperator *d, const FsGameCardHandle *handle)
+{
+
+}
+
+Result fs_get_game_card_device_id(FsDeviceOperator *d, const FsGameCardHandle *handle)
+{
+
+}
+
+Result fs_open_game_card_detection_event_notifier_event(FsEventNotifier *out)
+{
+
+}

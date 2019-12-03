@@ -39,7 +39,7 @@ typedef struct
     uint64_t hash_table_size; 
     uint64_t pfs0_offset;
     uint64_t pfs0_size;
-    uint8_t _0x48[0xF0];
+    uint8_t _0x48[0xB0];
 } pfs0_superblock_t;
 
 typedef struct

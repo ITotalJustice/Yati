@@ -13,9 +13,6 @@ static Service g_es_service;
 Result es_start_service()
 {
     Result rc = 0;
-    if (serviceIsActive(&g_es_service))
-        return rc;
-
     rc = smGetService(&g_es_service, "es");
     if (R_FAILED(rc))
         print_message_loop_lock("failed to start es service\n");

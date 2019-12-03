@@ -192,4 +192,11 @@ u64 fs_get_app_id_from_rights_id(FsRightsId rights_id);
 u64 fs_get_key_gen_from_rights_id(FsRightsId rights_id);
 
 
+/*
+*   IPC functions
+*/
+
+//
+Result fs_open_game_card_storage(const FsGameCardHandle *handle, FsStorage *out, FsGameCardPartition partition);
+
 #endif

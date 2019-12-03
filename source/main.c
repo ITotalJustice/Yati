@@ -24,12 +24,8 @@ void app_init()
         fatalThrow(0xE0E4);
     if (R_FAILED(ncmInitialize())) // nintendo content manager stuff
         fatalThrow(0xE0E5);
-    if (R_FAILED(plInitialize())) //
-        fatalThrow(0xE0E6);
     if (R_FAILED(usbCommsInitialize()))
         fatalThrow(0xE0E7);
-    if (R_FAILED(ns_start_services()))
-        fatalThrow(0xE0E9);
     if (R_FAILED(es_start_service()))
         fatalThrow(0xE0EA);
     if (R_FAILED(splInitialize()))
@@ -55,11 +51,8 @@ void app_exit()
     fsExit();
     nsExit();
     ncmExit();
-    plExit();
-    setExit();
     usbCommsExit();
     es_close_service();
-    ns_close_services();
     splExit();
     splFsExit();
     splEsExit();

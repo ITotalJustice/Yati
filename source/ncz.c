@@ -8,6 +8,7 @@
 #include "ncz.h"
 #include "nca.h"
 #include "ncm.h"
+#include "crypto.h"
 #include "util.h"
 
 
@@ -66,7 +67,7 @@ void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, u64 writ
             chunk = total_size - written_offset;
 
         if (ptr->sections[loc].crypto_type == 3)
-            nca_encrypt_ctr(&buf[buf_start_offset], &buf[buf_start_offset], ptr->sections[loc].crypto_key, ptr->sections[loc].crypto_counter, chunk, written_offset);
+            crypto_encrypt_ctr(&buf[buf_start_offset], &buf[buf_start_offset], ptr->sections[loc].crypto_key, ptr->sections[loc].crypto_counter, chunk, written_offset);
         
         written_offset += chunk;
         buf_start_offset += chunk;
@@ -77,7 +78,7 @@ void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, u64 writ
     ncm_write_placeholder(&ptr->nca.ncm.storage, &ptr->nca.ncm.placeholder_id, &ptr->nca.data_written, buf, back_up_size);
 }
 
-void ncz_temp(ncz_structs_t *ptr)
+void ncz_temp(ncz_structs_t *ptr) // temp name. all the code is being rewritten anyway...
 {
     ZSTD_DStream *zds = ZSTD_createDStream();
 
@@ -134,7 +135,8 @@ void ncz_temp(ncz_structs_t *ptr)
 
 void ncz_free_structs(ncz_structs_t *ptr)
 {
-    if (ptr->sections != NULL) free(ptr->sections);
+    if (ptr->sections != NULL)
+        free(ptr->sections);
 }
 
 void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f)
@@ -143,7 +145,7 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
     ncz_first_0x4000 *data = malloc(sizeof(ncz_first_0x4000));
 
     read_data_from_protocal(mode, data, NCZ_HEADER_OFFSET, offset, f, NULL);
-    nca_encrypt_decrypt_xts(data, data, 0, NCZ_HEADER_OFFSET, NCA_DECRYPT);
+    crypto_encrypt_decrypt_xts(&data->header, &data->header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Decrypt);
     nca_set_distribution_type_to_system(&data->header);
 
     ptr.nca.nca_file        = f;
@@ -154,7 +156,7 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
 
     // now that we have the nca size, we can setup the placeholder and write the header to it
     nca_setup_placeholder(&ptr.nca.ncm, name, data->header.nca_size, storage_id);
-    nca_encrypt_decrypt_xts(data, data, 0, NCZ_HEADER_OFFSET, NCA_ENCRYPT);
+    crypto_encrypt_decrypt_xts(&data->header, &data->header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Encrypt);
     ncm_write_placeholder(&ptr.nca.ncm.storage, &ptr.nca.ncm.placeholder_id, &ptr.nca.data_written, data, NCZ_HEADER_OFFSET);
     free(data);
 

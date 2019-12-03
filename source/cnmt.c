@@ -23,12 +23,12 @@ void cnmt_push_record(cnmt_header_t *cnmt_header, cnmt_struct_t *cnmt_struct, vo
     ContentStorageRecord cnmt_storage_record = { cnmt_key, cnmt_struct->storage_id };
 
     // get the app_id and setup data.
-    u_int64_t app_id = ncm_get_app_id_from_title_id(cnmt_key.id, cnmt_key.type);
+    u64 app_id = ncm_get_app_id_from_title_id(cnmt_key.id, cnmt_key.type);
     size_t data_size = sizeof(NcmContentMetaHeader) + ncm_cnmt_header.extended_header_size + (sizeof(NcmContentInfo) * ncm_cnmt_header.content_count);
-    u_int8_t *data = malloc(data_size);
+    u8 *data = malloc(data_size);
 
     // offset of data, start at 0 (of course).
-    u_int64_t data_offset = 0;
+    u64 data_offset = 0;
 
     // store all the data.
     memcpy(&data[data_offset], &ncm_cnmt_header, sizeof(NcmContentMetaHeader));
@@ -43,15 +43,15 @@ void cnmt_push_record(cnmt_header_t *cnmt_header, cnmt_struct_t *cnmt_struct, vo
     ncm_close_database(&db);
     free(data);
 
-    u_int8_t *app_record = malloc(sizeof(ContentStorageRecord));
+    u8 *app_record = malloc(sizeof(ContentStorageRecord));
     size_t app_record_size = 0;
 
     // check if any app_cnmt data exists, if so, add it to the start of the app_record buffer.
-    u_int32_t cnmt_count = ns_count_application_content_meta(app_id);
+    u32 cnmt_count = ns_count_application_content_meta(app_id);
     if (cnmt_count)
     {
         app_record_size = cnmt_count * sizeof(ContentStorageRecord);
-        u_int8_t *old_app_buf = malloc(app_record_size);
+        u8 *old_app_buf = malloc(app_record_size);
         memset(old_app_buf, 0, app_record_size);
 
         ns_list_application_record_content_meta(0, app_id, old_app_buf, app_record_size, cnmt_count);
@@ -68,7 +68,7 @@ void cnmt_push_record(cnmt_header_t *cnmt_header, cnmt_struct_t *cnmt_struct, vo
     free(app_record);
 }
 
-void *cnmt_set_ext_header(cnmt_struct_t *cnmt_struct, cnmt_header_t cnmt_header, u_int64_t *offset)
+void *cnmt_set_ext_header(cnmt_struct_t *cnmt_struct, cnmt_header_t cnmt_header, u64 *offset)
 {
     void *ext_data;
 
@@ -100,7 +100,7 @@ void *cnmt_set_ext_header(cnmt_struct_t *cnmt_struct, cnmt_header_t cnmt_header,
 void cnmt_read_data(cnmt_struct_t *cnmt_struct)
 {
     cnmt_header_t cnmt_header;
-    u_int64_t offset = 0;
+    u64 offset = 0;
 
     // main header.
     offset += fs_read_file(&cnmt_header, sizeof(cnmt_header_t), offset, FsReadOption_None, &cnmt_struct->cnmt_file);
@@ -116,7 +116,7 @@ void cnmt_read_data(cnmt_struct_t *cnmt_struct)
     memcpy(&cnmt_struct->cnmt_infos[0], &cnmt_struct->cnmt_info, sizeof(NcmContentInfo));
     cnmt_struct->total_cnmt_infos = 1;
 
-    for (u_int32_t i = 0; i < cnmt_header.content_count; i++)
+    for (u32 i = 0; i < cnmt_header.content_count; i++)
     {
         NcmPackagedContentInfo packed_temp;
         offset += fs_read_file(&packed_temp, sizeof(NcmPackagedContentInfo), offset, FsReadOption_None, &cnmt_struct->cnmt_file);

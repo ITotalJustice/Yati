@@ -7,6 +7,7 @@
 #include "nca.h"
 #include "ncm.h"
 #include "cnmt.h"
+#include "crypto.h"
 #include "util.h"
 
 
@@ -30,52 +31,9 @@ NcmContentId nca_get_id_from_string(const char *nca_in_string)
     return nca_id;
 }
 
-void *nca_get_header(nca_struct_t *nca_struct)
+void nca_set_distribution_type_to_system(nca_header_t *header)
 {
-    void *out = malloc(NCA_HEADER_SIZE);
-    read_data_from_protocal(nca_struct->mode, out, NCA_HEADER_SIZE, 0, nca_struct->nca_file, nca_struct->nca_file2);
-    return out;
-}
-
-void *nca_encrypt_ctr(void *out, const void *in, u8 *key, u8 *counter, size_t size, u64 offset)
-{
-    Aes128CtrContext ctx;
-    aes128CtrContextCreate(&ctx, key, counter);
-
-    u64 swp = __bswap64(offset >> 4);
-    memcpy(&counter[0x8], &swp, 0x8);
-    aes128CtrContextResetCtr(&ctx, counter);
-    aes128CtrCrypt(&ctx, out, in, size);
-
-    return out;
-}
-
-void *nca_encrypt_decrypt_xts(void *out, const void *in, u64 sector, size_t size, NcaEncrpytMode mode)
-{
-    u8 key[0x20] = { 0xAE, 0xAA, 0xB1, 0xCA, 0x08, 0xAD, 0xF9, 0xBE, 0xF1, 0x29, 0x91, 0xF3, 0x69, 0xE3, 0xC5, 0x67, 0xD6, 0x88, 0x1E, 0x4E, 0x4A, 0x6A, 0x47, 0xA5, 0x1F, 0x6E, 0x48, 0x77, 0x06, 0x2D, 0x54, 0x2D };
-    u8 ip1[0x10] = { 0 };
-    u8 ip2[0x10] = { 0 };
-
-    memcpy(ip1, key, 0x10);
-    memcpy(ip2, &key[0x10], 0x10);
-
-    Aes128XtsContext ctx;
-    aes128XtsContextCreate(&ctx, ip1, ip2, mode);
-
-    for (u64 pos = 0; pos < size; pos += NCA_SECTOR_SIZE)
-    {
-        aes128XtsContextResetSector(&ctx, sector++, true);
-        switch (mode)
-        {
-            case NCA_DECRYPT:
-                aes128XtsDecrypt(&ctx, (u8 *)out + pos, (const u8 *)in + pos, NCA_SECTOR_SIZE);
-                break;
-            case NCA_ENCRYPT:
-                aes128XtsEncrypt(&ctx, (u8 *)out + pos, (const u8 *)in + pos, NCA_SECTOR_SIZE);
-                break;
-        }
-    }
-    return out;
+    header->distribution_type = NcaDistributionType_System;
 }
 
 Result nca_single_thread_install(nca_struct_t *nca_struct)
@@ -91,6 +49,7 @@ Result nca_single_thread_install(nca_struct_t *nca_struct)
         print_message_display("\twriting file %ldMB - %ldMB\r", nca_struct->data_written / _1MiB, nca_struct->nca_size / _1MiB);
 
         read_data_from_protocal(nca_struct->mode, data_temp, buf_size, nca_struct->offset + offset, nca_struct->nca_file, nca_struct->nca_file2);
+
         rc = ncm_write_placeholder(&nca_struct->ncm.storage, &nca_struct->ncm.placeholder_id, &nca_struct->data_written, data_temp, buf_size);
         free(data_temp);
 
@@ -140,41 +99,53 @@ Result nca_setup_placeholder(ncm_install_struct_t *ncm, const char *name, size_t
     return rc;
 }
 
-void nca_set_distribution_type_to_system(nca_header_t *header)
+Result nca_get_header_decrypted(nca_header_t *header, u64 offset, InstallProtocal mode, FILE *f, FsFile *f2)
 {
-    header->distribution_type = NcaDistributionType_System;
+    Result rc = 0;
+
+    // get the header.
+    read_data_from_protocal(mode, header, NCA_HEADER_SIZE, offset, f, f2);
+
+    // decrypt it.
+    crypto_encrypt_decrypt_xts(header, header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Decrypt);
+
+    // set distrubution type to 
+    nca_set_distribution_type_to_system(header);
+
+    return rc;
 }
 
 Result nca_start_install(const char *name, u64 offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2)
 {
     Result rc = 0;
     nca_struct_t nca_struct;
+    nca_header_t header;
 
-    // TODO VERIFY NCA.
-    // should verify nca as well at this point.
-    nca_header_t nca_header;
-    read_data_from_protocal(mode, &nca_header, NCA_HEADER_SIZE, offset, f, f2);
-    nca_encrypt_decrypt_xts(&nca_header, &nca_header, 0, NCA_HEADER_SIZE, NCA_DECRYPT);
-    nca_header.distribution_type = 0;
-
-    // setup the placeholder / get content_id.
-    if (R_FAILED(rc = nca_setup_placeholder(&nca_struct.ncm, name, nca_header.nca_size, storage_id)))
-    {
-        print_message_loop_lock("failed to setup nca placeholder\n");
+    rc = nca_get_header_decrypted(&header, offset, mode, f, f2);
+    if (R_FAILED(rc))
         return rc;
-    }
 
     // fill in the needed data to be passed around.
     nca_struct.nca_file     = f;
     nca_struct.nca_file2    = f2;
     nca_struct.mode         = mode;
-    nca_struct.nca_size     = nca_header.nca_size - NCA_HEADER_SIZE;
+    nca_struct.storage_id   = storage_id;
+    //nca_struct.size_from_container = 0;
+    nca_struct.size_from_header = header.nca_size - NCA_HEADER_SIZE;
+    nca_struct.nca_size     = header.nca_size - NCA_HEADER_SIZE;
     nca_struct.offset       = offset + NCA_HEADER_SIZE;
     nca_struct.data_written = 0;
 
+    // setup the placeholder / get content_id.
+    if (R_FAILED(rc = nca_setup_placeholder(&nca_struct.ncm, name, header.nca_size, storage_id)))
+    {
+        print_message_loop_lock("failed to setup nca placeholder\n");
+        return rc;
+    }
+
     // now that we have the nca size, we can setup the placeholder and write the header to it
-    nca_encrypt_decrypt_xts(&nca_header, &nca_header, 0, NCA_HEADER_SIZE, NCA_ENCRYPT);
-    ncm_write_placeholder(&nca_struct.ncm.storage, &nca_struct.ncm.placeholder_id, &nca_struct.data_written, &nca_header, NCA_HEADER_SIZE);
+    crypto_encrypt_decrypt_xts(&header, &header, NULL, NULL, 0, NCA_HEADER_SIZE, EncryptMode_Encrypt);
+    ncm_write_placeholder(&nca_struct.ncm.storage, &nca_struct.ncm.placeholder_id, &nca_struct.data_written, &header, NCA_HEADER_SIZE);
 
     // start nca install.
     if (R_FAILED(rc = nca_single_thread_install(&nca_struct)))
@@ -223,4 +194,15 @@ bool nca_prepare_single_install(const char *file_name, NcmStorageId storage_id)
 
     free(cnmt_struct.cnmt_infos);
     return true;
+}
+
+
+/*
+*   nac install rewrite.
+*/
+
+
+void nca_setup_install()
+{
+
 }

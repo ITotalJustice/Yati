@@ -474,8 +474,3 @@ void *mem_alloc(size_t size)
     memset(mem, 0, size);
     return mem;
 }
-
-
-/*
-*   NX functions.
-*/

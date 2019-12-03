@@ -121,6 +121,8 @@ bool pfs0_extract_all(pfs0_struct_ptr *ptr, InstallProtocal mode)
 
 void pfs0_free_structs(pfs0_struct_ptr *ptr)
 {
-    if (ptr->file_table != NULL)    free(ptr->file_table);
-    if (ptr->string_table != NULL)  free(ptr->string_table);
+    if (ptr->file_table != NULL)
+        free(ptr->file_table);
+    if (ptr->string_table != NULL)
+        free(ptr->string_table);
 }

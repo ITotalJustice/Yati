@@ -37,15 +37,12 @@ bool ns_check_if_can_deliver_app_info(NsApplicationDeliveryInfo *info0, s32 coun
 s32 ns_list_content_meta_key(NcmContentMetaKey *meta, NsApplicationDeliveryInfo *info);
 
 
-/*
-* code from og foil, slightly modified.
-*/
+// seems to always return 4.
+u32 ns_count_application_record(u64 app_id);
 
-// start services ns:h2 and es.
-Result ns_start_services(void);
+//
+Result ns_delete_application_completely(u64 app_id);
 
-// close services ns:h2 and es.
-void ns_close_services(void);
 
 // push an application record.
 Result ns_push_application_record(u64 app_id, void *cnmt_storage_records, size_t data_size);
