@@ -24,28 +24,32 @@ bool unzip_get_global_info()
 
 bool unzip_open_file(unzFile zfile)
 {
-    if (UNZ_OK == unzOpenCurrentFile(zfile)) return true;
+    if (UNZ_OK == unzOpenCurrentFile(zfile))
+        return true;
     print_message_loop_lock("failed to open current zip file\npressb to exit\n");
     return false;
 }
 
 bool unzip_close_file(unzFile zfile)
 {
-    if (UNZ_OK == unzCloseCurrentFile(zfile)) return true;
+    if (UNZ_OK == unzCloseCurrentFile(zfile))
+        return true;
     print_message_loop_lock("failed to close current file in unzip\npress b to exit\n");
     return false;
 }
 
 bool unzip_get_file_info(unzFile zfile, unz_file_info *file_info, char *name_out, size_t size)
 {
-    if (UNZ_OK == unzGetCurrentFileInfo(zfile, file_info, name_out, size, NULL, 0, NULL, 0)) return true;
+    if (UNZ_OK == unzGetCurrentFileInfo(zfile, file_info, name_out, size, NULL, 0, NULL, 0))
+        return true;
     print_message_loop_lock("failed to get current file info in zip\npress b to exit\n");
     return false;
 }
 
 bool unzip_next_file(unzFile zfile)
 {
-    if (UNZ_OK == unzGoToNextFile(zfile)) return true;
+    if (UNZ_OK == unzGoToNextFile(zfile))
+        return true;
     print_message_loop_lock("failed to go to next file in unzip\npress b to exit\n");
     return false;
 }
@@ -54,7 +58,8 @@ bool unzip_contents(unzFile zfile)
 {
     char filename_inzip[FILENAME_MAX];
     unz_file_info file_info;
-    if (!unzip_get_file_info(zfile, &file_info, filename_inzip, FILENAME_MAX)) return false;
+    if (!unzip_get_file_info(zfile, &file_info, filename_inzip, FILENAME_MAX))
+        return false;
 
     // check if the string ends with a /, if so, then its a directory.
     if (unzip_is_folder(filename_inzip)) { if (!check_if_dir_exists(filename_inzip)) if (!create_dir(filename_inzip)) return false; }
@@ -97,13 +102,16 @@ int unzip(const char *file)
         return false;
     }
 
-    for (u_int32_t i = 0; i < gi.number_entry; i++)
+    for (uint32_t i = 0; i < gi.number_entry; i++)
     {
-        if (!unzip_open_file(zfile)) break;
+        if (!unzip_open_file(zfile))
+            break;
         bool res = unzip_contents(zfile);
         
-        if (!res) break;
-        if (!unzip_next_file(zfile)) break;
+        if (!res)
+            break;
+        if (!unzip_next_file(zfile))
+            break;
     }
 
     unzClose(zfile);

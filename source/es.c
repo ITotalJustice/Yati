@@ -10,7 +10,7 @@
 static Service g_es_service;
 
 
-Result es_start_service()
+Result es_start_service(void)
 {
     Result rc = 0;
     rc = smGetService(&g_es_service, "es");
@@ -65,14 +65,14 @@ Result es_delete_all_personalised_tik(void)
     Result rc = serviceDispatch(&g_es_service, 6, SfOutHandleAttr_None, SfOutHandleAttr_None);
 }
 
-Result es_delete_all_personalised_tik_ex()
+Result es_delete_all_personalised_tik_ex(void)
 {
     Result rc = serviceDispatch(&g_es_service, 7, SfOutHandleAttr_None, SfOutHandleAttr_None);
 }
 
-u32 es_count_common_tik(void)
+uint32_t es_count_common_tik(void)
 {
-    u32 out_total = 0;
+    uint32_t out_total = 0;
 
     Result rc = serviceDispatchOut(&g_es_service, 9, out_total, SfOutHandleAttr_None);
     if (R_FAILED(rc))
@@ -80,9 +80,9 @@ u32 es_count_common_tik(void)
     return out_total;
 }
 
-u32 es_count_personailsed_tik(void)
+uint32_t es_count_personailsed_tik(void)
 {
-    u32 out_total = 0;
+    uint32_t out_total = 0;
 
     Result rc = serviceDispatchOut(&g_es_service, 10, out_total, SfOutHandleAttr_None);
     if (R_FAILED(rc))
@@ -90,10 +90,10 @@ u32 es_count_personailsed_tik(void)
     return out_total;
 }
 
-Result es_list_common_tik(FsRightsId *out, u32 count)
+Result es_list_common_tik(FsRightsId *out, uint32_t count)
 {
-    u32 out_total = 0;
-    u64 buffer_idk = 0;
+    uint32_t out_total = 0;
+    uint64_t buffer_idk = 0;
 
     Result rc = serviceDispatchInOut(&g_es_service, 11, buffer_idk, out_total,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -106,10 +106,10 @@ Result es_list_common_tik(FsRightsId *out, u32 count)
     return rc;
 }
 
-Result es_list_personalised_tik(FsRightsId *out, u32 count)
+Result es_list_personalised_tik(FsRightsId *out, uint32_t count)
 {
-    u32 out_total = 0;
-    u64 buffer_idk = 0;
+    uint32_t out_total = 0;
+    uint64_t buffer_idk = 0;
 
     Result rc = serviceDispatchInOut(&g_es_service, 12, buffer_idk, out_total,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -122,10 +122,10 @@ Result es_list_personalised_tik(FsRightsId *out, u32 count)
     return rc;
 }
 
-u32 es_get_common_tik_size(const FsRightsId *rights_id)
+uint32_t es_get_common_tik_size(const FsRightsId *rights_id)
 {
-    u32 out_size = 0;
-    u64 buffer_idk = 0;
+    uint32_t out_size = 0;
+    uint64_t buffer_idk = 0;
 
     Result rc = serviceDispatchInOut(&g_es_service, 14, buffer_idk, out_size,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -138,7 +138,7 @@ u32 es_get_common_tik_size(const FsRightsId *rights_id)
 
 Result es_get_common_tik_data(void *out, size_t out_size, const FsRightsId *rights_id)
 {
-    u64 buffer_idk = 0;
+    uint64_t buffer_idk = 0;
 
     Result rc = serviceDispatchInOut(&g_es_service, 16, rights_id, buffer_idk,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },

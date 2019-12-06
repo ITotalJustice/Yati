@@ -12,30 +12,58 @@
 #include "util.h"
 
 
-#define XCI_MAGIC   0x44414548
-#define XCI_UPDATE  "update"
-#define XCI_NORMAL  "normal"
-#define XCI_SECURE  "secure"
-
-
-void xci_get_header()
+void xci_get_header(xci_ptr_t *ptr, install_protocal_t *install_protocal)
 {
+    memset(&ptr->header, 0, sizeof(xci_header_t));
+    read_data_from_protocal(&ptr->header, sizeof(xci_header_t), 0, install_protocal);
 }
 
-bool xci_check_valid_magic()
+bool xci_check_valid_head_magic(uint32_t magic)
 {
-    return true;
+    return magic_check(magic, XCI_MAGIC);
 }
 
-void xci_get_info()
+bool xci_check_valid_cert_magic(uint32_t magic)
 {
+    return magic_check(magic, XCI_CERT_MAGIC);
 }
 
-void xci_get_cert()
+void xci_get_cert(xci_ptr_t *ptr, install_protocal_t *install_protocal)
 {
+    memset(&ptr->cert, 0, sizeof(xci_cert_t));
+    read_data_from_protocal(&ptr->cert, sizeof(xci_cert_t), XCI_CERT_OFFSET, install_protocal);
+
 }
 
-void xci_start_install(xci_structs_t *ptr, NcmStorageId storage_id, InstallProtocal mode)
+void xci_decrypt_cert(xci_ptr_t *ptr)
+{
+
+}
+
+void xci_dump_partition(GameCardPartition partition)
+{
+
+}
+
+void xci_setup_install_new(const char *file, InstallProtocalMode mode)
+{
+    xci_ptr_t ptr;
+    install_protocal_t install_protocal;
+    install_protocal.mode = mode;
+    if (mode == InstallProtocalMode_SD)
+        if (!(install_protocal.std_file = open_file(file, "rb")))
+            return;
+    
+    xci_get_header(&ptr);
+    if (!xci_check_valid_head_magic(ptr.header.magic))
+    {
+        fclose(install_protocal.std_file);
+        return;
+    }
+
+}
+
+void xci_start_install(xci_structs_t *ptr, NcmStorageId storage_id, InstallProtocalMode mode)
 {
     int loc = hfs0_search_string_table(&ptr->hfs0_secure, "cnmt.nca");
     if (loc == -1)
@@ -83,7 +111,7 @@ void xci_start_install(xci_structs_t *ptr, NcmStorageId storage_id, InstallProto
     free(cnmt_struct.cnmt_infos);
 }
 
-bool xci_get_partition(hfs0_structs_t *hfs0, u64 offset, InstallProtocal mode)
+bool xci_get_partition(hfs0_structs_t *hfs0, u64 offset, InstallProtocalMode mode)
 {
     hfs0_get_header(hfs0, offset, mode);
     if (!hfs0_check_if_magic_valid(hfs0->header.magic))
@@ -95,7 +123,7 @@ bool xci_get_partition(hfs0_structs_t *hfs0, u64 offset, InstallProtocal mode)
     return true;
 }
 
-void xci_setup_install(const char *file_name, NcmStorageId storage_id, InstallProtocal mode)
+void xci_setup_install(const char *file_name, NcmStorageId storage_id, InstallProtocalMode mode)
 {
     // create main struct on the stack which gets passed around the whole program.
     xci_structs_t ptr;

@@ -38,6 +38,7 @@ void nsp_start_install(pfs0_struct_ptr *ptr, NcmStorageId storage_id, InstallPro
     if (loc == -1)
         return;
 
+    NcmContentId content_id = nca_get_id_from_string(); 
     if (R_FAILED(nca_start_install(ptr->string_table[loc].name, ptr->raw_data_offset + ptr->file_table[loc].data_offset, storage_id, mode, ptr->file, NULL)))
     {
         print_message_loop_lock("failed to install cnmt\n");
@@ -46,12 +47,6 @@ void nsp_start_install(pfs0_struct_ptr *ptr, NcmStorageId storage_id, InstallPro
     
     // attempt to install tik and cert.
     nsp_setup_tik_cert_install(ptr, storage_id, mode);
-
-    cnmt_struct_t cnmt_struct;
-    memset(&cnmt_struct, 0, sizeof(cnmt_struct_t));
-
-    cnmt_struct.storage_id = storage_id;
-    strcpy(cnmt_struct.cnmt_name, ptr->string_table[loc].name);
 
     if (R_FAILED(cnmt_open(&cnmt_struct)))
     {
@@ -110,8 +105,6 @@ void nsp_setup_install(const char *file_name, NcmStorageId storage_id, InstallPr
     ptr.raw_data_size = pfs0_get_total_raw_data_size(&ptr);
 
     // check if we have enough space for the selected game.
-    // wont really work for ncz sadly because it'll be compressed size.
-    // why doesnt the pfs0 have a u64 for total size fml.
     // if not, cleanup and exit.
 
     // now that we've filled out the tables, we can start installing!

@@ -11,14 +11,14 @@
 #include "ticket.h"
 
 
-void ticket_menu_refresh_screen(ticket_struct_t *tik, u32 cursor, u32 list_move)
+void ticket_menu_refresh_screen(ticket_struct_t *tik, uint32_t cursor, uint32_t list_move)
 {
     consoleClear();
 
     printf("Ticket Menu:\n\n");
     printf("Press X to delete a ticket.\tPress B / + to quit\n");
 
-    for (u32 i = 0, j = list_move; i < tik->total && i < LIST_MAX; i++, j++)
+    for (uint32_t i = 0, j = list_move; i < tik->total && i < LIST_MAX; i++, j++)
     {
         if (cursor == j)
             printf("\n\n[X] %s", tik->info[j].name);
@@ -45,8 +45,8 @@ int ticket_menu()
         return 1;
     }
     
-    u32 cursor = 0;
-    u32 list_move = 0;
+    uint32_t cursor = 0;
+    uint32_t list_move = 0;
 
     ticket_menu_refresh_screen(&tik, cursor, list_move);
 

@@ -32,17 +32,19 @@ bool http_check_if_file_exists()
     return true;
 }
 
-bool remote_install_start(NcmStorageId storage_id, InstallProtocal mode)
+bool remote_install_start(NcmStorageId storage_id, InstallProtocalMode mode)
 {
-    u_int32_t magic = 0;
+    uint32_t magic = 0;
 
     switch (mode)
     {
-        case NTWRK_INSTALL:
-            if (!http_check_if_file_exists()) return false;
-            if (!ntwrk_start(url)) return false;
+        case InstallProtocalMode_NTWRK:
+            if (!http_check_if_file_exists())
+                return false;
+            if (!ntwrk_start(url))
+                return false;
             break;
-        case USB_INSTALL:
+        case InstallProtocalMode_USB:
             // init usb here
             break;
         default:
@@ -51,7 +53,7 @@ bool remote_install_start(NcmStorageId storage_id, InstallProtocal mode)
     }
 
     print_message_display("getting file magic...\n");
-    read_data_from_protocal(mode, &magic, sizeof(u_int32_t), 0, NULL, NULL);
+    read_data_from_protocal(&magic, sizeof(uint32_t), 0, .mode = mode);
 
     if (pfs0_check_valid_magic(magic))
     {
@@ -67,10 +69,10 @@ bool remote_install_start(NcmStorageId storage_id, InstallProtocal mode)
     //cleanup
     switch (mode)
     {
-        case NTWRK_INSTALL:
+        case InstallProtocalMode_NTWRK:
             ntwrk_exit();
             break;
-        case USB_INSTALL:
+        case InstallProtocalMode_USB:
             usb_exit();
             break;
         default:

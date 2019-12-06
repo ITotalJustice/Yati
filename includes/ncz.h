@@ -4,8 +4,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nca.h"
+#include "nca_new.h"
 
+
+#define NCZ_SECTION_MAGIC   0x4E544345535A434E
+#define NCZ_BLOCK_MAGIC     0xB434FCC424A534E4
+
+#define NCZ_HEADER_SIZE     0x10
+#define NCZ_HEADER_OFFSET   0x4000
 
 typedef struct
 {
@@ -15,45 +21,39 @@ typedef struct
 
 typedef struct
 {
-    uint64_t    offset;
-    uint64_t    decompressed_size;
-    uint64_t    crypto_type;
-    uint64_t    padding;
-    uint8_t     crypto_key[0x10];
-    uint8_t     crypto_counter[0x10];
+    uint64_t offset;
+    uint64_t decompressed_size;
+    uint64_t crypto_type;
+    uint64_t padding;
+    uint8_t crypto_key[0x10];
+    uint8_t crypto_counter[0x10];
 } ncz_section_t;
 
 typedef struct
 {
-    uint64_t    magic;
-    uint8_t     version;
-    uint8_t     type;
-    uint8_t     padding;
-    uint8_t     block_size_exponent;
-    uint32_t    total_blocks;
-    size_t      decompressed_size;
-    uint32_t    *compressed_block_size_list;
+    uint64_t magic;
+    uint8_t version;
+    uint8_t type;
+    uint8_t padding;
+    uint8_t block_size_exponent;
+    uint32_t total_blocks;
+    size_t decompressed_size;
+    uint32_t *compressed_block_size_list;
 } ncz_block_t;
 
 typedef struct
 {
-    nca_header_t header;
-    u8 encrypted[0x3CC0];
-} ncz_first_0x4000;
+    nca_ptr_t nca;
 
-typedef struct
-{
-    nca_struct_t    nca;
+    ncz_header_t header;
+    ncz_section_t *sections;
+    ncz_block_t block;
 
-    ncz_header_t    header;
-    ncz_section_t   *sections;
-    ncz_block_t     block;
-
-    size_t          ncz_size; // size of the entire ncz.
-    uint64_t        ncz_section_offset; // starting offset of the section tables.
-    size_t          ncz_section_size; // size of the total section tables.
-    uint64_t        ncz_data_offset; // offset in encrypted data.
-    size_t          ncz_data_size; // size of uncompressed nca - 0x4000.
+    size_t ncz_size; // size of the entire ncz.
+    uint64_t ncz_section_offset; // starting offset of the section tables.
+    size_t ncz_section_size; // size of the total section tables.
+    uint64_t ncz_data_offset; // offset in encrypted data.
+    size_t ncz_data_size; // size of uncompressed nca - 0x4000.
 } ncz_structs_t;
 
 
@@ -68,7 +68,7 @@ void ncz_populate_sections(ncz_structs_t *ptr);
 
 // check if the ncz magic is valid.
 // returns 1 if valid.
-bool ncz_check_valid_magic(ncz_structs_t *ptr);
+bool ncz_check_valid_magic(uint32_t magic);
 
 // free structs and close file.
 // checks if file exists and if data is used before freeing.

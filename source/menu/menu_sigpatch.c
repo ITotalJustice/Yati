@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 #include <switch.h>
@@ -40,7 +41,7 @@ void sigpatch_menu_refresh(int cursor)
     printf("Press (A) to select option\n\n");
     printf("Press (+) to exit\n\n\n");
 
-    for (int i = 0; i < CURSOR_LIST_MAX; i++)
+    for (uint8_t i = 0; i < CURSOR_LIST_MAX; i++)
     {
         if (cursor != i)
             printf("[ ] %s\n\n", option_list[i]);
@@ -62,7 +63,7 @@ int sigpatch_menu()
     while (appletMainLoop())
     {
         hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        uint64_t kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
         // move cursor up...
         if (kDown & KEY_UP)
@@ -84,7 +85,7 @@ int sigpatch_menu()
             {
                 case UP_SIGS:
                 {
-                    if (ntwrk_quick_download(SIGS_URL, 0x100000, TEMP_FILE))
+                    if (ntwrk_quick_download(SIGS_URL, DataSize_1MiB, TEMP_FILE))
                     {
                         char file_name[FILENAME_MAX];
                         if (parse_search_from_file(TEMP_FILE, GBATEMP_FILTER_STRING, file_name))
@@ -92,7 +93,7 @@ int sigpatch_menu()
                             char new_url[FILENAME_MAX];
                             if (snprintf(new_url, FILENAME_MAX, "%s%s", GBATEMP_URL, file_name))
                             {
-                                if (ntwrk_quick_download(new_url, 0x100000, TEMP_FILE))
+                                if (ntwrk_quick_download(new_url, DataSize_1MiB, TEMP_FILE))
                                 {
                                     unzip(TEMP_FILE);
                                 }
@@ -104,12 +105,12 @@ int sigpatch_menu()
 
                 case UP_JOONIE:
                 {
-                    if (ntwrk_quick_download(JOON_SIGS_URL, 0x100000, TEMP_FILE))
+                    if (ntwrk_quick_download(JOON_SIGS_URL, DataSize_1MiB, TEMP_FILE))
                     {
                         char new_url[FILENAME_MAX];
                         if (parse_search_from_file(TEMP_FILE, GITHUB_FILTER_STRING, new_url))
                         {
-                            if (ntwrk_quick_download(new_url, 0x100000, TEMP_FILE))
+                            if (ntwrk_quick_download(new_url, DataSize_1MiB, TEMP_FILE))
                             {
                                 unzip(TEMP_FILE);
                             }

@@ -12,40 +12,31 @@
 #include "util.h"
 
 
-#define NCZ_SECTION_MAGIC 0x4E544345535A434E
-#define NCZ_HEADER_OFFSET 0x4000
-
-
-void ncz_get_header(ncz_structs_t *ptr)
+void ncz_get_header(ncz_structs_t *ptr, install_protocal_t *protocal)
 {
     memset(&ptr->header, 0, sizeof(ncz_header_t));
-    read_data_from_protocal(ptr->nca.mode, &ptr->header, sizeof(ncz_header_t), ptr->nca.offset, ptr->nca.nca_file, NULL);
+    read_data_from_protocal(&ptr->header, NCZ_HEADER_SIZE, ptr->nca.offset, protocal);
 }
 
-bool ncz_check_valid_magic(ncz_structs_t *ptr)
+bool ncz_check_valid_magic(uint32_t magic)
 {
-    if (ptr->header.magic != NCZ_SECTION_MAGIC)
-    {
-        print_message_loop_lock("\ngot wrong magic %016lx\n", ptr->header.magic);
-        return false;
-    }
-    return true;
+    return magic_check(magic, NCZ_SECTION_MAGIC);
 }
 
 void ncz_populate_sizes_offsets(ncz_structs_t *ptr)
 {
-    ptr->ncz_section_offset = ptr->nca.offset + sizeof(ncz_header_t);
+    ptr->ncz_section_offset = ptr->nca.offset + NCZ_HEADER_SIZE;
     ptr->ncz_section_size = ptr->header.total_sections * sizeof(ncz_section_t);
     ptr->ncz_data_offset = ptr->ncz_section_offset + ptr->ncz_section_size;
 }
 
-void ncz_populate_sections(ncz_structs_t *ptr)
+void ncz_populate_sections(ncz_structs_t *ptr, install_protocal_t *protocal)
 {
     ptr->sections = malloc(ptr->ncz_section_size);
-    read_data_from_protocal(ptr->nca.mode, ptr->sections, ptr->ncz_section_size, ptr->ncz_section_offset, ptr->nca.nca_file, NULL);
+    read_data_from_protocal(ptr->sections, ptr->ncz_section_size, ptr->ncz_section_offset, protocal);
 }
 
-int ncz_get_section(ncz_structs_t *ptr, u64 offset)
+int ncz_get_section(ncz_structs_t *ptr, uint64_t offset)
 {
     for (int i = 0; i < ptr->header.total_sections; i++)
         if (offset < ptr->sections[i].offset + ptr->sections[i].decompressed_size && offset >= ptr->sections[i].offset)
@@ -54,14 +45,14 @@ int ncz_get_section(ncz_structs_t *ptr, u64 offset)
     return -1;
 }
 
-void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, u64 written_offset)
+void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, uint64_t written_offset)
 {
     size_t back_up_size = buf_size;
     for (size_t buf_start_offset = 0; buf_start_offset < back_up_size;)
     {
         int loc = ncz_get_section(ptr, written_offset);
         size_t total_size = ptr->sections[loc].offset + ptr->sections[loc].decompressed_size;
-        u64 chunk = buf_size;
+        uint64_t chunk = buf_size;
 
         if (written_offset + buf_size > total_size)
             chunk = total_size - written_offset;
@@ -76,6 +67,16 @@ void ncz_encryption_setup(ncz_structs_t *ptr, u8 *buf, size_t buf_size, u64 writ
 
     print_message_display("\twriting file %ldMB - %ldMB\r", ptr->nca.data_written / 0x100000, ptr->nca.nca_size / 0x100000);
     ncm_write_placeholder(&ptr->nca.ncm.storage, &ptr->nca.ncm.placeholder_id, &ptr->nca.data_written, buf, back_up_size);
+}
+
+void ncz_decompress(void *data, size_t data_size)
+{
+
+}
+
+void ncz_compress()
+{
+
 }
 
 void ncz_temp(ncz_structs_t *ptr) // temp name. all the code is being rewritten anyway...
@@ -98,7 +99,7 @@ void ncz_temp(ncz_structs_t *ptr) // temp name. all the code is being rewritten 
         size_t output_chunk_size = ZSTD_DStreamOutSize();
         size_t data_size = buf_size * 2;
         u8 *data_buf = malloc(data_size);
-        u64 data_stored = 0;
+        uint64_t data_stored = 0;
 
         // loop until all data is decompressed.
         while (input.pos < input.size)
@@ -139,9 +140,10 @@ void ncz_free_structs(ncz_structs_t *ptr)
         free(ptr->sections);
 }
 
-void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f)
+void ncz_start_install(NcmContentId content_id, size_t size, uint64_t offset, NcmStorageId storage_id, install_protocal_t *protocal)
 {
     ncz_structs_t ptr;
+    nca_setup
     ncz_first_0x4000 *data = malloc(sizeof(ncz_first_0x4000));
 
     read_data_from_protocal(mode, data, NCZ_HEADER_OFFSET, offset, f, NULL);
@@ -171,3 +173,6 @@ void ncz_start_install(const char *name, size_t size, u64 offset, NcmStorageId s
     ncm_close_storage(&ptr.nca.ncm.storage);
     ncz_free_structs(&ptr);
 }
+
+void ncz_prepare_single_install()
+{}

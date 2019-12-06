@@ -1,27 +1,36 @@
 #ifndef _NCA_H_
 #define _NCA_H_
 
+#include <stdio.h>
 #include <stdbool.h>
-#include <switch.h>
-#include "util.h"
-#include "ncm.h"
+#include <stdint.h>
 
-// for xts dec / enc.
-#define NCA_SECTOR_SIZE         0x200
-// should be 0x400, will change soon.
-#define NCA_HEADER_SIZE         0x330
-// section of the nca that is encrypted with aes_xts. the first 0x400 make up the nca header, the other 0x800 is the section header block * 4.
-#define NCA_XTS_SECTION_SIZE    0xC00
+#include "pfs0.h"
+#include "util.h"
+
+
+#define NCA_SECTOR_SIZE             0x200
+#define NCA_HEADER_SIZE             0xC00
+#define SECTION_ENTRY_TABLE_SIZE    0x10
+#define SECTION_HEADER_SIZE         0x200
 
 #define NCA0_MAGIC 0x3041434E
 #define NCA2_MAGIC 0x3241434E
 #define NCA3_MAGIC 0x3341434E
 
+#define NCA_PROGRAM_LOGO_OFFSET     0x8000
+#define NCA_META_CNMT_OFFSET        0xC20
 
 typedef enum
 {
-    NcaEncrpytMode_Decrypt,
-    NcaEncrpytMode_Encrypt
+    NcaIsEncrypted_Encrypted,
+    NcaIsEncrypted_Decrypted
+} NcaIsEncrypted;
+
+typedef enum
+{
+    NcaEncrpytMode_Decrypt  = 0x0,
+    NcaEncrpytMode_Encrypt  = 0x1
 } NcaEncrpytMode;
 
 typedef enum
@@ -87,129 +96,102 @@ typedef enum
     NcaEncryptionType_AesCtrEx  = 0x4
 } NcaEncryptionType;
 
+typedef enum
+{
+    NcaDataType_Normal  = 0x0,
+    NcaDataType_Ncz     = 0x1
+} NcaDataType;
+
 typedef struct
 {
-    u32 media_start_offset; 
-    u32 media_end_offset;
-    u32 _0x8;               // unkown.
-    u32 _0xC;               // unkown.
+    uint32_t media_start_offset; // divided by 0x200.
+    uint32_t media_end_offset;   // divided by 0x200.
+    uint32_t _0x8;               // unkown.
+    uint32_t _0xC;               // unkown.
 } nca_section_table_entry_t;
 
 typedef struct
 {
-    u8 sha256[0x20];
+    uint16_t always_2;                   // always 2.
+    uint8_t fs_type;          // see NcaFileSystemType.
+    uint8_t hash_type;              // see NcaHashType.
+    uint8_t encryption_type;  // see NcaEncryptionType.
+    uint8_t _0x5[0x3];                  // empty.
+    pfs0_superblock_t pfs0_sb;
+    union
+    {
+        pfs0_superblock_t pfs0_sb;
+        //romfs_superblock_t romfs_sb;
+        // anything else?????
+    };
+    uint8_t bktr_not_finished[0x100]; // not finished. is optional?
+} nca_section_header_t;
+
+typedef struct
+{
+    uint8_t sha256[0x20];
 } nca_section_header_hash_t;
 
 typedef struct
 {
-    u8 area[0x10];
+    uint8_t area[0x10];
 } nca_key_area_t;
 
 typedef struct
 {
-    u8 rsa_fixed_key[0x100];
-    u8 rsa_npdm[0x100];
-    u32 magic;
-    NcaDistributionType distribution_type;               // see NcaDistributionType.
-    NcaContentType content_type;                    // see NcaContentType.
-    NcaOldKeyGeneration old_key_gen;                     // see NcaOldKeyGeneration.
-    NcaKeyAreaEncryptionKeyIndex key_area_encryption_key_index;   // see NcaKeyAreaEncryptionKeyIndex.
+    uint8_t rights_id[0x10];
+} rights_id_t;
+
+typedef struct
+{
+    uint8_t rsa_fixed_key[0x100];
+    uint8_t rsa_npdm[0x100]; // key from npdm.
+    uint32_t magic;
+    uint8_t distribution_type; // see NcaDistributionType.
+    uint8_t content_type; // see NcaContentType.
+    uint8_t old_key_gen; // see NcaOldKeyGeneration.
+    uint8_t key_area_encryption_key_index; // see NcaKeyAreaEncryptionKeyIndex.
     size_t nca_size;
-    u64 title_id;
-    u32 context_id;
-    u32 sdk_version;
-    NcaKeyGeneration key_gen;                         // see NcaKeyGeneration.
-    u8 _0x221[0xF];     // empty.
+    uint64_t title_id;
+    uint32_t context_id;
+    uint32_t sdk_version;
+    uint8_t key_gen; // see NcaKeyGeneration.
+    uint8_t _0x221[0xF]; // empty.
     FsRightsId rights_id;
 
     nca_section_table_entry_t section_table[0x4];
     nca_section_header_hash_t section_header_hash[0x4];
     nca_key_area_t key_area[0x4];
 
-    // this is correct size of the nca header.
-    // will change this later once ncz / nca is re written so that the nca is always passed through nca.c
-    // after being decompressed in ncz.c
-    //u8 _0x340[0xB0];    // empty.
+    uint8_t _0x340[0xC0]; // empty. next nca_section_header_t.
+
+    nca_section_header_t section_header[0x4];
 } nca_header_t;
 
 typedef struct
 {
-    u16 version;            // always 2.
-    u8 file_system_type;    // see NcaFileSystemType.
-    u8 hash_type;           // see NcaHashType.
-    u8 encryption_type;     // see NcaEncryptionType.
-    u8 padding;
-    u8 fs_super_block[0xF8];
-    u8 bktr_not_finished[0x0];
-} nca_section_header_t;
+    uint64_t offset;
+    uint64_t size;
+} section_info_t; // poor naming choice, couldn't think of anything better for now.
 
 typedef struct
 {
-    void *data;
-    u8 *key;
-    u64 offset;
-    size_t size;
-    u64 sector;
-} nca_encryption_struct_t;
+    uint64_t block_offset;
+    uint8_t crypto_key[0x10];
+    uint8_t crypto_counter[0x10];
+} nca_encryption_t;
 
 typedef struct
 {
-    InstallProtocal mode;           // see InstallProtocal.
+    nca_header_t header;
+    section_info_t section_info[0x4];
+    uint8_t section_total;
+
+    uint64_t offset;
+    size_t data_size;
+    uint8_t data_type; // see NcaDataType;
+
     ncm_install_struct_t ncm;
-
-    FsFile *nca_file2;
-    FILE *nca_file;                 // only used if mode == SD_CARD_INSTALL.
-
-    size_t nca_size;
-    u64 offset;                     // offset of the file.
-
-    bool is_encrypted;
-    u8 storage_id;                  // see NcmStorageId.
-
-    u8 *data;                       // the data the nca is stored into.
-    size_t data_stored;             // size of data currently stored into mem.
-    size_t data_written;            // size of data written to placeholder.
-} nca_struct_t;
-
-
-// write into *nca_string_out the created string.
-// return the string thats written.
-const char *nca_get_string_from_id(const NcmContentId nca_id, char *nca_string_out);
-
-// return the nca_id from the string.
-NcmContentId nca_get_id_from_string(const char *nca_string);
-
-// encrypts the header.
-void nca_encrypt_header(nca_header_t *header);
-
-// decrypts the header.
-void nca_decrypt_header(nca_header_t *header);
-
-// reads NCA_HEADER_SIZE
-// calls nca_decrypt_header.
-void nca_get_header_decrypted(nca_header_t *header, u64 offset, InstallProtocal mode, FILE *f, FsFile *f2);
-
-//
-Result nca_register_placeholder(ncm_install_struct_t *ncm);
-
-//
-Result nca_setup_placeholder(ncm_install_struct_t *ncm, const char *name, size_t size, NcmStorageId storage_id);
-
-//
-void nca_set_distribution_type_to_system(nca_header_t *header);
-
-// start installing the nca.
-Result nca_start_install(const char *name, u64 offset, NcmStorageId storage_id, InstallProtocal mode, FILE *f, FsFile *f2);
-
-// installs a single nca.
-bool nca_prepare_single_install(const char *file_name, NcmStorageId storage_id);
-
-
-/*
-*   rewrite
-*/
-
-//
-Result nca_install_header(nca_struct_t *nca_struct);
+} nca_ptr_t;
 
 #endif

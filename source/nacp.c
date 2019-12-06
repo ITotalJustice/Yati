@@ -27,7 +27,7 @@ Result nacp_get_lang_entry(NacpStruct *nacp, NacpLanguageEntry **out)
     return rc;
 }
 
-Result nacp_get_lang_entry_from_app_id(u64 app_id, NacpLanguageEntry **out)
+Result nacp_get_lang_entry_from_app_id(uint64_t app_id, NacpLanguageEntry **out)
 {
     NsApplicationControlData data;
     Result rc = ns_get_app_control_data(&data, app_id);
@@ -38,7 +38,7 @@ Result nacp_get_lang_entry_from_app_id(u64 app_id, NacpLanguageEntry **out)
 
 Result nacp_get_lang_entry_from_rights_id(FsRightsId rights_id, NacpLanguageEntry **out)
 {
-    u64 app_id = fs_get_app_id_from_rights_id(rights_id);
+    uint64_t app_id = fs_get_app_id_from_rights_id(rights_id);
     return nacp_get_lang_entry_from_app_id(app_id, out);
 }
 

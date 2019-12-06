@@ -4,46 +4,51 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <dirent.h>
-
-#include <switch.h>
+#include <switch/services/fs.h>
 
 #define TEMP_FILE   "temp"
 #define LIST_MAX    20 // for use with ui listing.
 
 typedef enum
 {
-    SD_CARD_INSTALL = 0,
-    USB_INSTALL     = 1,
-    NTWRK_INSTALL   = 2,
-    GC_INSTALL      = 3,
-} InstallProtocal;
+    InstallProtocalMode_SD      = 0x0,
+    InstallProtocalMode_USB     = 0x1,
+    InstallProtocalMode_NTWRK   = 0x2,
+    InstallProtocalMode_GC      = 0x3
+} InstallProtocalMode;
 
 typedef enum
 {
-    _1kb = 0x400,
+    DataSize_1kb = 0x400,
+    DataSize_1MiB = 0x100000,
+    DataSize_2MiB = 0x200000,
+    DataSize_3MiB = 0x300000,
+    DataSize_4MiB = 0x400000,
+    DataSize_5MiB = 0x500000,
+    DataSize_6MiB = 0x600000,
+    DataSize_7MiB = 0x700000,
+    DataSize_8MiB = 0x800000,
+    DataSize_16MiB = 0x1000000
+} DataSize;
 
-    _1MiB = 0x100000,
-    _2MiB = 0x200000,
-    _3MiB = 0x300000,
-    _4MiB = 0x400000,
-    _5MiB = 0x500000,
-    _6MiB = 0x600000,
-    _7MiB = 0x700000,
-    _8MiB = 0x800000
-} buffer_sizes;
-
+typedef struct
+{
+    uint8_t mode;   // see InstallProtocal.
+    FILE *std_file;
+    FsFile fs_file;
+} install_protocal_t; // name not set.
 
 /*
 *   CURSOR FUNCTIONS.
 */
 
 // move the cursor up / down.
-unsigned int move_cursor_up(unsigned int cursor, unsigned int cursor_max);
-unsigned int move_cursor_down(unsigned int cursor, unsigned int cursor_max);
+uint32_t move_cursor_up(uint32_t cursor, uint32_t cursor_max);
+uint32_t move_cursor_down(uint32_t cursor, uint32_t cursor_max);
 
 // move list up / down.
-unsigned int list_move_up(unsigned int list_move, unsigned int cursor, unsigned int number_of_files, unsigned int list_max);
-unsigned int list_move_down(unsigned int list_move, unsigned int cursor, unsigned int list_max);
+uint32_t list_move_up(uint32_t list_move, uint32_t cursor, uint32_t number_of_files, uint32_t list_max);
+uint32_t list_move_down(uint32_t list_move, uint32_t cursor, uint32_t list_max);
 
 
 /*
@@ -146,14 +151,14 @@ void print_message_loop_lock(const char* message, ...);
 // size: size of data tp be read.
 // offset: starting point of the data.
 // f: the file to read the data from.
-void read_file(void *out, size_t size, u_int64_t offset, FILE *f);
+void read_file(void *out, size_t size, uint64_t offset, FILE *f);
 
 // read data from the selected protocal.
 // out: data to be written to.
 // size: size of the data to read.
 // offset: starting point of the data.
 // f: optional file, only used if protocal is sd install.
-void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int64_t offset, FILE *f, FsFile *f2);
+void read_data_from_protocal(void *out, size_t size, uint64_t offset, install_protocal_t *protocal);
 
 
 /*
@@ -175,5 +180,10 @@ size_t debug_dump_info(const void *buf, size_t buf_size, const char *path, const
 //
 void *mem_alloc(size_t size);
 
+// switch util stuff.
+bool magic_check(uint32_t magic1, uint32_t magic2);
+
+// switch util stuff.
+uint64_t media_to_offset(uint32_t offset);
 
 #endif

@@ -6,12 +6,6 @@
 
 typedef struct
 {
-    NcmContentMetaKey metaRecord;
-    u8 storageId;
-} ContentStorageRecord;
-
-typedef struct
-{
     NcmContentStorage storage;          // 
     NcmPlaceHolderId placeholder_id;    // placeholder where the nca is written to.
     NcmContentId content_id;

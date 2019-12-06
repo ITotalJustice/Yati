@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
@@ -157,7 +157,7 @@ CURLcode ntwrk_setup_write(void *data_struct)
     return res;
 }
 
-CURLcode ntwrk_setup_range(u_int64_t start, u_int64_t end)
+CURLcode ntwrk_setup_range(uint64_t start, uint64_t end)
 {
     char range[128];
     snprintf(range, 128, "%lu-%lu", start, end);
@@ -168,7 +168,7 @@ CURLcode ntwrk_setup_range(u_int64_t start, u_int64_t end)
     return res;
 }
 
-CURLcode ntwrk_start_download(ntwrk_struct_t *data_struct, u_int64_t offset_start, u_int64_t offset_end)
+CURLcode ntwrk_start_download(ntwrk_struct_t *data_struct, uint64_t offset_start, uint64_t offset_end)
 {
     CURLcode res = 0;
 
@@ -202,7 +202,7 @@ CURLcode ntwrk_start_download(ntwrk_struct_t *data_struct, u_int64_t offset_star
     return res;
 }
 
-void ntwrk_setup_download(void *data, size_t data_size, u_int64_t start_offset)
+void ntwrk_setup_download(void *data, size_t data_size, uint64_t start_offset)
 {
     ntwrk_struct_t data_struct = { data, data_size, 0, true, NULL };
     ntwrk_start_download(&data_struct, start_offset, start_offset + data_size);

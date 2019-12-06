@@ -86,6 +86,9 @@ s64 fs_search_dir_for_file(FsDir *dir, const char *file);
 //
 bool fs_search_dir_for_file_2(FsDir *dir, FsDirectoryEntry *out, const char *file);
 
+//
+bool fs_get_file_in_dir_and_open(FsFileSystem *system, FsDir *dir, FsFile *out, const char *file, uint32_t mode);
+
 // close dir.
 void fs_close_dir(FsDir *dir);
 

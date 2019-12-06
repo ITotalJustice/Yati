@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <switch.h>
 
 #include "util.h"
@@ -7,9 +8,9 @@
 
 int select_install_location()
 {
-    u8 location_cursor = 0;
-    u8 location_list_max = 2;
-    u8 install_location[] = { NcmStorageId_BuiltInUser, NcmStorageId_SdCard };
+    uint8_t location_cursor = 0;
+    uint8_t location_list_max = 2;
+    uint8_t install_location[] = { NcmStorageId_BuiltInUser, NcmStorageId_SdCard };
     const char *location_options[] = { "NAND", "SD_CARD" };
     
     print_main_menu(location_options, location_cursor, location_list_max);
@@ -17,7 +18,7 @@ int select_install_location()
     while (1)
     {
         hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        uint64_t kDown = hidKeysDown(CONTROLLER_P1_AUTO);
 
         if (kDown & KEY_UP)
         {

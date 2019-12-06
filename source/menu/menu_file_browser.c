@@ -98,15 +98,18 @@ void swap(int i, int j)
 
 void alphabetical_sort(int left, int right)
 {
-    if (left >= right) return;
+    if (left >= right)
+        return;
 
     swap(left, (left + right)/2);
     int last = left;
 
     for (int i = left + 1; i <= right; i++)
     {
-        if (file_info[left]->dir == NO && file_info[i]->dir == YES) swap(++last, i);
-        else if (strcasecmp(file_info[i]->file_name, file_info[left]->file_name) < 0) swap(++last, i);
+        if (file_info[left]->dir == NO && file_info[i]->dir == YES)
+            swap(++last, i);
+        else if (strcasecmp(file_info[i]->file_name, file_info[left]->file_name) < 0)
+            swap(++last, i);
     }
 
     swap(left, last);
@@ -151,7 +154,8 @@ void create_node(const char *folder_location)
         // store all the information of each file in the directory.
         while ((de = readdir(dir)))
         {
-            if (!is_dir(de->d_name) && !check_valid_ext(get_filename_ext(de->d_name))) continue;
+            if (!is_dir(de->d_name) && !check_valid_ext(get_filename_ext(de->d_name)))
+                continue;
 
             file_info[n] = malloc(sizeof(file_info_t));
             file_info[n]->selected = false;
@@ -182,7 +186,8 @@ void create_node(const char *folder_location)
         list_move = 0;
 
         // sort if more than 1 file exists.
-        if (folder_info->total > 1) alphabetical_sort(0, folder_info->total - 1);
+        if (folder_info->total > 1)
+            alphabetical_sort(0, folder_info->total - 1);
     }
 }
 
@@ -222,11 +227,14 @@ void move_back_dir()
 bool file_select()
 {
     // if selected file is a dir, enter it.
-    if (file_info[cursor]->dir == YES) return enter_directory();
+    if (file_info[cursor]->dir == YES)
+        return enter_directory();
 
     int location = select_install_location();
-    if (location == -1)         return 0; // break;
-    else if (location == -2)    return 1; // exit file browser.
+    if (location == -1)
+        return 0; // break;
+    else if (location == -2)
+        return 1; // exit file browser.
 
     // TODO: add multi install.
     // can just add code from my old install ui...
@@ -298,14 +306,17 @@ int directory_menu()
 
         if (kDown & KEY_A)
         {
-            if (file_select() == 1) break;
+            if (file_select() == 1)
+                break;
             print_dir();
         }
 
         if (kDown & KEY_B)
         {
-            if (folder_info->total_selected > 0) clear_multi_select();
-            else move_back_dir();
+            if (folder_info->total_selected > 0)
+                clear_multi_select();
+            else
+                move_back_dir();
             print_dir();
         }
 
@@ -328,13 +339,16 @@ int directory_menu()
         // select / de-select all.
         if (kDown & KEY_Y)
         {
-            if (folder_info->total_selected == folder_info->total_files) clear_multi_select();
-            else select_all();
+            if (folder_info->total_selected == folder_info->total_files)
+                clear_multi_select();
+            else
+                select_all();
             print_dir();
         }
 
         // exit app.
-        if (kDown & KEY_PLUS) break;
+        if (kDown & KEY_PLUS)
+            break;
     }
 
     free_nodes();

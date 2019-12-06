@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -32,7 +33,7 @@ const char *get_filename_ext(const char *filename)
     return dot + 1;
 }
 
-unsigned int move_cursor_up(unsigned int cursor, unsigned int cursor_max)
+uint32_t move_cursor_up(uint32_t cursor, uint32_t cursor_max)
 {
     if (cursor == 0)
         cursor = cursor_max - 1;
@@ -41,7 +42,7 @@ unsigned int move_cursor_up(unsigned int cursor, unsigned int cursor_max)
     return cursor;
 }
 
-unsigned int move_cursor_down(unsigned int cursor, unsigned int cursor_max)
+uint32_t move_cursor_down(uint32_t cursor, uint32_t cursor_max)
 {
     if (cursor == cursor_max - 1)
         cursor = 0;
@@ -50,7 +51,7 @@ unsigned int move_cursor_down(unsigned int cursor, unsigned int cursor_max)
     return cursor;
 }
 
-unsigned int list_move_up(unsigned int list_move, unsigned int cursor, unsigned int number_of_files, unsigned int list_max)
+uint32_t list_move_up(uint32_t list_move, uint32_t cursor, uint32_t number_of_files, uint32_t list_max)
 {
     if (cursor == list_move - 1)
         list_move--;
@@ -59,7 +60,7 @@ unsigned int list_move_up(unsigned int list_move, unsigned int cursor, unsigned 
     return list_move;
 }
 
-unsigned int list_move_down(unsigned int list_move, unsigned int cursor, unsigned int list_max)
+uint32_t list_move_down(uint32_t list_move, uint32_t cursor, uint32_t list_max)
 {
     if (cursor == (list_max - 1) + (list_move + 1))
         list_move++;
@@ -101,7 +102,7 @@ DIR *open_dir(const char *directory)
     return NULL;
 }
 
-void read_file(void *out, size_t size, u_int64_t offset, FILE *f)
+void read_file(void *out, size_t size, uint64_t offset, FILE *f)
 {
     fseek(f, offset, SEEK_SET);
     fread(out, size, 1, f);
@@ -281,10 +282,10 @@ void copy_file(const char *src, char *dest)
 
     if (srcfile && newfile)
     {
-        void *buf = malloc(0x800000);
-        size_t bytes;           // size of the file to write (8MiB or filesize max)
+        void *buf = malloc(DataSize_8MiB);
+        size_t bytes; // size of the file to write (8MiB or filesize max)
 
-        while (0 < (bytes = fread(buf, 1, 0x800000, srcfile)))
+        while (0 < (bytes = fread(buf, 1, DataSize_8MiB, srcfile)))
             fwrite(buf, bytes, 1, newfile);
         free(buf);
     }
@@ -430,34 +431,35 @@ void print_message_loop_lock(const char* message, ...)
     while (appletMainLoop()) //1:55
     {
         hidScanInput();
-        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_B) break;
+        if (hidKeysDown(CONTROLLER_P1_AUTO) & KEY_B)
+            break;
     }
 }
 
-void read_data_from_protocal(InstallProtocal mode, void *out, size_t size, u_int64_t offset, FILE *f, FsFile *f2)
+void read_data_from_protocal(void *out, size_t size, uint64_t offset, install_protocal_t *protocal)
 {
     u_int8_t *data_temp = memalign(0x1000, size);
 
-    switch (mode)
+    switch (protocal->mode)
     {
-        case SD_CARD_INSTALL:
+        case InstallProtocalMode_SD:
         {
-            read_file(data_temp, size, offset, f);
+            read_file(data_temp, size, offset, protocal->std_file);
             break;
         }
-        case USB_INSTALL:
+        case InstallProtocalMode_USB:
         {
             usb_read(data_temp, size, offset);
             break;
         }
-        case NTWRK_INSTALL:
+        case InstallProtocalMode_NTWRK:
         {
             ntwrk_setup_download(data_temp, size, offset);
             break;
         }
-        case GC_INSTALL:
+        case InstallProtocalMode_GC:
         {
-            fs_read_file(data_temp, size, offset, FsReadOption_None, f2);
+            fs_read_file(data_temp, size, offset, FsReadOption_None, &protocal->fs_file);
             break;
         }
     }
@@ -473,4 +475,19 @@ void *mem_alloc(size_t size)
         print_message_loop_lock("failed to alloc mem with size %lu\n", size);
     memset(mem, 0, size);
     return mem;
+}
+
+bool magic_check(uint32_t magic1, uint32_t magic2)
+{
+    if (magic1 != magic2)
+    {
+        print_message_loop_lock("\ngot wrong magic %x\n", magic1);
+        return false;
+    }
+    return true;
+}
+
+uint64_t media_to_offset(uint32_t offset)
+{
+    return offset * 0x200;
 }
