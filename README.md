@@ -1,6 +1,8 @@
 # YATI (Yet Another Title Installer).
 
-A work-in-progress title installer (soon to be title manager) for the Nintendo Switch!
+This project has been abandoned.
+
+It was great fun working on it and I got a lot further than I thought I would, however I no longer find it fun to work on.
 
 ----
 
